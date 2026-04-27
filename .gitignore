@@ -4,3 +4,5 @@ __pycache__/
 db.sqlite3
 .env
 *.pdf
+tree.txt
+notes.txt
