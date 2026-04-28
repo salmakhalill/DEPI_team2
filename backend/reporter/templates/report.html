@@ -1,0 +1,37 @@
+<html>
+<head>
+    <title>Scan Report</title>
+</head>
+<body>
+
+<h1>Web Vulnerability Report</h1>
+
+<p><strong>Target:</strong> {{ target_url }}</p>
+<p><strong>Date:</strong> {{ scan_date }}</p>
+
+<hr>
+
+{% for v in vulnerabilities %}
+
+    <h2>{{ v.name }}</h2>
+    <p><strong>Severity:</strong> {{ v.severity }}</p>
+    <p><strong>Status:</strong> {{ v.status }}</p>
+
+    <p><strong>Payload Used:</strong></p>
+    <pre>{{ v.payload_used }}</pre>
+
+    <p><strong>Technical Timeline:</strong></p>
+    <ul>
+        {% for step in v.technical_timeline %}
+            <li>
+                <strong>{{ step.step }}:</strong>
+                {{ step.detail }}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <hr>
+
+{% endfor %}
+
+</body>
