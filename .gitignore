@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 db.sqlite3
 .env
+*.pdf
+tree.txt
+notes.md
