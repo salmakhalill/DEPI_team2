@@ -1,0 +1,57 @@
+{
+  "summary": {
+    "scan_id": "a1b2c3d4-5678-90ef-1234-567890abcdef",
+    "target_url": "http://127.0.0.1/dvwa",
+    "status": "Completed",
+    "started_at": "2026-05-01T10:00:00Z",
+    "finished_at": "2026-05-01T10:05:30Z",
+    "total_findings": 3,
+    "severity_counts": {
+      "CRITICAL": 0,
+      "HIGH": 2,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 0
+    }
+  },
+  "findings": [
+    {
+      "vulnerability": "Reflected Cross-Site Scripting (XSS)",
+      "severity": "HIGH",
+      "url": "http://127.0.0.1/dvwa/vulnerabilities/xss_r/",
+      "description": "User input is reflected in the HTTP response without proper output encoding.",
+      "proof": {
+        "method": "GET",
+        "parameter": "name",
+        "payload": "<script>alert(1)</script>",
+        "reflection_snippet": "<pre>Hello <script>alert(1)</script></pre>"
+      },
+      "remediation": "Apply context-aware output encoding and sanitize user input."
+    },
+    {
+      "vulnerability": "Sensitive File Disclosure",
+      "severity": "MEDIUM",
+      "url": "http://127.0.0.1/.env",
+      "description": "Environment configuration file is publicly accessible.",
+      "proof": {
+        "method": "GET",
+        "file_path": "/.env",
+        "response_snippet": "DB_PASSWORD=secret123\nAPI_KEY=abcde"
+      },
+      "remediation": "Configure web server to deny access to dotfiles and sensitive directories."
+    },
+    {
+      "vulnerability": "Insecure Direct Object Reference (IDOR)",
+      "severity": "HIGH",
+      "url": "http://127.0.0.1/api/users/2/profile",
+      "description": "The endpoint does not enforce object-level authorization, allowing access to other users' data.",
+      "proof": {
+        "method": "GET",
+        "foreign_id": "2",
+        "status_code": 200,
+        "response_snippet": "{\"id\":2,\"name\":\"Bob Regular\",\"role\":\"user\"}"
+      },
+      "remediation": "Implement strict object-level authorization checks validating the requested ID against the authenticated user's session."
+    }
+  ]
+}
