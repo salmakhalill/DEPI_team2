@@ -1,7 +1,7 @@
 import requests
 import re
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
-from base_scanner import BaseScanner
+from backend.engine.core.base_scanner import BaseScanner
 
 
 class XSSScanner(BaseScanner):
