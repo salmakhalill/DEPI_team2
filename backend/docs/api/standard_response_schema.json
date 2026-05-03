@@ -1,57 +1,111 @@
 {
   "summary": {
-    "scan_id": "a1b2c3d4-5678-90ef-1234-567890abcdef",
+    "scan_id": "scan-987654321",
     "target_url": "http://127.0.0.1/dvwa",
     "status": "Completed",
     "started_at": "2026-05-01T10:00:00Z",
     "finished_at": "2026-05-01T10:05:30Z",
+    "duration_seconds": 330,
     "total_findings": 3,
     "severity_counts": {
-      "CRITICAL": 0,
-      "HIGH": 2,
-      "MEDIUM": 1,
-      "LOW": 0,
-      "INFO": 0
+      "CRITICAL": 0, "HIGH": 2, "MEDIUM": 1, "LOW": 0, "INFO": 0
     }
   },
   "findings": [
     {
+      "id": "vuln-001",
+      "timestamp": "2026-05-01T10:01:15Z",
       "vulnerability": "Reflected Cross-Site Scripting (XSS)",
       "severity": "HIGH",
+      "confidence": "HIGH",
+      "cwe": "CWE-79",
+      "owasp": "A03:2021-Injection",
       "url": "http://127.0.0.1/dvwa/vulnerabilities/xss_r/",
-      "description": "User input is reflected in the HTTP response without proper output encoding.",
-      "proof": {
+      "description": "User input is reflected in the HTTP response without proper output encoding, allowing execution of malicious JavaScript.",
+      "request": {
         "method": "GET",
-        "parameter": "name",
-        "payload": "<script>alert(1)</script>",
-        "reflection_snippet": "<pre>Hello <script>alert(1)</script></pre>"
+        "url": "http://127.0.0.1/dvwa/vulnerabilities/xss_r/?name=<script>alert(1)</script>",
+        "headers": { "User-Agent": "Mozilla/5.0", "Cookie": "session=UserA_Token" },
+        "body": ""
       },
+      "response": {
+        "status_code": 200,
+        "snippet": "<pre>Hello <script>alert(1)</script></pre>"
+      },
+      "proof": {
+        "parameter": "name",
+        "payload": "<script>alert(1)</script>"
+      },
+      "reproduction_steps": [
+        "1. Open the target URL.",
+        "2. Inject the payload '<script>alert(1)</script>' into the 'name' parameter.",
+        "3. Observe the executed JavaScript in the browser."
+      ],
       "remediation": "Apply context-aware output encoding and sanitize user input."
     },
     {
-      "vulnerability": "Sensitive File Disclosure",
+      "id": "vuln-002",
+      "timestamp": "2026-05-01T10:03:40Z",
+      "vulnerability": "Sensitive File Disclosure (SFD)",
       "severity": "MEDIUM",
+      "confidence": "CERTAIN",
+      "cwe": "CWE-200",
+      "owasp": "A01:2021-Broken Access Control",
       "url": "http://127.0.0.1/.env",
-      "description": "Environment configuration file is publicly accessible.",
-      "proof": {
+      "description": "An environment configuration file is publicly accessible, leaking sensitive system data.",
+      "request": {
         "method": "GET",
-        "file_path": "/.env",
-        "response_snippet": "DB_PASSWORD=secret123\nAPI_KEY=abcde"
+        "url": "http://127.0.0.1/.env",
+        "headers": { "User-Agent": "Mozilla/5.0" },
+        "body": ""
       },
-      "remediation": "Configure web server to deny access to dotfiles and sensitive directories."
+      "response": {
+        "status_code": 200,
+        "snippet": "DB_PASSWORD=secret123\nAPI_KEY=abcde"
+      },
+      "proof": {
+        "file_path": "/.env",
+        "matched_pattern": "DB_PASSWORD"
+      },
+      "reproduction_steps": [
+        "1. Send a GET request to the /.env path.",
+        "2. Observe the server responds with a 200 OK and the file contents."
+      ],
+      "remediation": "Configure the web server to explicitly deny access to dotfiles and sensitive directories."
     },
     {
+      "id": "vuln-003",
+      "timestamp": "2026-05-01T10:05:10Z",
       "vulnerability": "Insecure Direct Object Reference (IDOR)",
       "severity": "HIGH",
+      "confidence": "HIGH",
+      "cwe": "CWE-639",
+      "owasp": "A01:2021-Broken Access Control",
       "url": "http://127.0.0.1/api/users/2/profile",
-      "description": "The endpoint does not enforce object-level authorization, allowing access to other users' data.",
-      "proof": {
+      "description": "The endpoint does not enforce object-level authorization. A user can access another user's private data by modifying the ID parameter.",
+      "request": {
         "method": "GET",
-        "foreign_id": "2",
-        "status_code": 200,
-        "response_snippet": "{\"id\":2,\"name\":\"Bob Regular\",\"role\":\"user\"}"
+        "url": "http://127.0.0.1/api/users/2/profile",
+        "headers": { 
+          "User-Agent": "Mozilla/5.0", 
+          "Cookie": "session=UserA_Token" 
+        },
+        "body": ""
       },
-      "remediation": "Implement strict object-level authorization checks validating the requested ID against the authenticated user's session."
+      "response": {
+        "status_code": 200,
+        "snippet": "{\"id\":2,\"name\":\"User B\",\"email\":\"userB@test.com\",\"role\":\"admin\"}"
+      },
+      "proof": {
+        "tested_parameter": "user_id",
+        "foreign_id_accessed": "2"
+      },
+      "reproduction_steps": [
+        "1. Authenticate as User A and obtain a session cookie.",
+        "2. Send a GET request to the target URL representing User B's profile.",
+        "3. Observe that the server returns User B's sensitive data instead of a 403 Forbidden error."
+      ],
+      "remediation": "Implement strict object-level authorization checks validating that the requested ID belongs to the authenticated user's session."
     }
   ]
 }
