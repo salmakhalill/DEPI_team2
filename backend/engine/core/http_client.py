@@ -1,11 +1,12 @@
 import time
 import requests
+import urllib3
 from urllib.parse import urlparse
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-import urllib3
+from engine.models.http_context import HttpResponse
 
-# Suppress SSL warnings for local or testing targets
+# suppress warnings for labs or self-signed cert targets
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class SafeHttpClient:
@@ -14,37 +15,33 @@ class SafeHttpClient:
         self.delay = delay
         self.timeout = timeout
 
-        # Spoof a standard browser to bypass basic WAFs
+        # spoof user-agent to bypass trivial defense filters
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         })
 
-        if headers:
-            self.session.headers.update(headers)
-        if cookies:
-            self.session.cookies.update(cookies)
+        if headers: self.session.headers.update(headers)
+        if cookies: self.session.cookies.update(cookies)
 
-        # Configure retry strategy for flaky connections
+        # network retry loop for flaky services
         retries = Retry(
             total=3, 
             backoff_factor=0.5, 
             status_forcelist=[429, 500, 502, 503, 504]
         )
-        adapter = HTTPAdapter(max_retries=retries)
-        self.session.mount('http://', adapter)
-        self.session.mount('https://', adapter)
+        self.session.mount('http://', HTTPAdapter(max_retries=retries))
+        self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
     def _is_safe_url(self, url):
-        # Basic SSRF protection to prevent internal network scanning
+        # ssrf mitigation: isolate core server from private subnets
         parsed = urlparse(url)
-        forbidden_hosts = ['localhost', '127.0.0.1', '0.0.0.0']
-        return parsed.hostname not in forbidden_hosts
+        forbidden = ['localhost', '127.0.0.1', '0.0.0.0', '192.168.', '10.']
+        return not any(host in (parsed.hostname or "") for host in forbidden)
 
-    def request(self, method, url, **kwargs):
+    def request(self, method, url, **kwargs) -> HttpResponse:
         if not self._is_safe_url(url):
-            return None
+            return HttpResponse(success=False, error_message="SSRF Blocked: Destination host is restricted")
         
-        # Rate limiting to avoid overloading the target
         if self.delay > 0:
             time.sleep(self.delay)
             
@@ -52,13 +49,21 @@ class SafeHttpClient:
         kwargs.setdefault('verify', False)
         
         try:
-            return self.session.request(method, url, **kwargs)
-        except requests.exceptions.RequestException:
-            # Silently handle network errors to keep the scanner running
-            return None
+            res = self.session.request(method, url, **kwargs)
+            return HttpResponse(
+                success=True,
+                status_code=res.status_code,
+                text=res.text,
+                headers=dict(res.headers)
+            )
+        except requests.exceptions.Timeout:
+            return HttpResponse(success=False, error_message="Target connection timed out")
+        except requests.exceptions.RequestException as e:
+            # capture connection errors without throwing unhandled failures
+            return HttpResponse(success=False, error_message=str(e))
 
-    def get(self, url, **kwargs):
+    def get(self, url, **kwargs) -> HttpResponse:
         return self.request('GET', url, **kwargs)
 
-    def post(self, url, **kwargs):
+    def post(self, url, **kwargs) -> HttpResponse:
         return self.request('POST', url, **kwargs)
