@@ -8,7 +8,8 @@ from rest_framework import status
 from .models import Scan
 from engine.orchestrator import Orchestrator
 from engine.core.http_client import SafeHttpClient
-from tests.pdf_test.report_generator import generate_pdf 
+from reporter.report_generator import generate_pdf 
+from engine.scanners.sqli_scanner import SQLInjectionScanner
 
 def run_scan_in_background(scan_id, target_url, dynamic_cookies):
     try:
@@ -18,7 +19,11 @@ def run_scan_in_background(scan_id, target_url, dynamic_cookies):
         
         # Team will register active scanning plugins here
         # orchestrator.register_scanner(SQLInjectionScanner(target_url, client))
-        
+
+
+        # Register the SQL Injection Scanner engine into the orchestrator execution pipeline
+        orchestrator.register_scanner(SQLInjectionScanner(target_url, client))
+
         final_report_json = orchestrator.run_assessment()
         
         scan.status = 'Completed'
@@ -77,12 +82,14 @@ class DownloadReportView(APIView):
         if scan.status != 'Completed' or not scan.full_report_json:
             return Response({"error": "Report not ready"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Output target PDF path config
         output_pdf_path = f"/tmp/NexusFlow_Report_{scan_id}.pdf"
         
-        generate_pdf(scan.full_report_json, 'static_content.json', 'report_template.html', output_pdf_path)
+        # FIXED: Pass strictly as positional arguments to guarantee mapping compatibility
+        generate_pdf(scan.full_report_json, output_pdf_path)
 
         if os.path.exists(output_pdf_path):
             response = FileResponse(open(output_pdf_path, 'rb'), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="Penetration_Test_Report.pdf"'
+            response['Content-Disposition'] = f'attachment; filename="Penetration_Test_Report_{scan_id}.pdf"'
             return response
-        return Response({"error": "Generation Failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Failed to locate generated PDF file"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -9,52 +9,65 @@ class SQLInjectionScanner(BaseScanner):
     
     def run_scan(self, endpoints: List[Endpoint]) -> List[Finding]:
         findings = []
-        # 1. Load payloads and regex rules from JSON
+        # Load centralized SQLi payload cases and mapping regex signatures
         sqli_cases = PayloadManager.get_payloads("sqli")
+        
+        print(f"  [SQLi Scanner] Assessing attack surface logic across {len(endpoints)} targets...")
 
         for ep in endpoints:
-            if ep.method == "GET" and ep.params:
+            # SQLi typically maps to input variables passed via parameters
+            if ep.params:
                 for param in ep.params:
-                    
-                    # 2. Loop through every test case in the JSON
                     for case in sqli_cases:
                         payload = case["payload"]
                         regex_pattern = case["match_regex"]
                         
+                        # Reconstruct the attack query array state
                         test_params = {p: "1" for p in ep.params}
                         test_params[param] = payload
 
-                        response = self.client.get(ep.url, params=test_params)
+                        # Execute network tracking probe request via SafeHttpClient
+                        if ep.method == "GET":
+                            response = self.client.get(ep.url, params=test_params)
+                        else:
+                            response = self.client.post(ep.url, data=test_params)
 
-                        # 3. Use regex to verify if the vulnerability exists
                         if response.success:
-                            # Search for the regex pattern in the response text
+                            # Apply the specific regex signature checking to the raw HTML text body
                             match = re.search(regex_pattern, response.text)
                             
                             if match:
-                                print(f"  [!] SQLi Confirmed at {ep.url}?{param}= using regex '{regex_pattern}'")
+                                print(f"  [!] SQL Injection Confirmed! Target: {ep.url} | Param: '{param}'")
                                 
                                 finding = Finding(
-                                    title=f"SQL Injection (Error Based) in '{param}'",
+                                    title=f"SQL Injection Vulnerability in '{param}' parameter",
                                     owasp_category="A03:2021 - Injection",
                                     threat_level="Critical",
-                                    cvss_score="8.9",
-                                    affected_path=ep.url,
-                                    description=f"The parameter '{param}' is vulnerable. The database returned an error matching the regex: {regex_pattern}",
-                                    business_impact="Attacker can dump the entire database, including passwords and API keys.",
-                                    recommendations=["Use parameterized queries (SQLAlchemy ORM).", "Never use raw f-strings for SQL."],
-                                    references=["OWASP SQLi Prevention"],
+                                    cvss_score="9.8 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)",
+                                    affected_path=f"{ep.method} {ep.url}",
+                                    description=f"The endpoint dynamically concatenates raw user inputs into internal SQL command tracking blocks via parameter '{param}'. The system responded with a database footprint matching signature pattern: {regex_pattern}",
+                                    business_impact="An unauthenticated or low-privilege attacker can completely bypass structural storage data tables encryption layers, leaking enterprise secrets, administrative credentials, and business operational source structures.",
+                                    recommendations=[
+                                        "Implement strictly structured parameterized query logic using Object Relational Mapping templates (SQLAlchemy ORM models).",
+                                        "Sanitize and strip downstream special string notations from active application fields dynamically."
+                                    ],
+                                    references=["https://owasp.org/www-community/attacks/SQL_Injection"],
                                     proof_of_concept=ProofOfConcept(
-                                        intro_text=f"Sent payload '{payload}', server responded with a database error.",
-                                        steps_to_reproduce=[f"Inject {payload} in {param}"],
+                                        intro_text=f"Injecting a targeted payload input character string into the active input variable vector parameter '{param}' triggered an immediate unhandled backend SQL operational structural execution.",
+                                        steps_to_reproduce=[
+                                            f"1. Target the identified verification node path endpoint: {ep.url}",
+                                            f"2. Inject malicious raw character payload format inside target element variable: ?{param}={payload}",
+                                            "3. Verify data response tables contents leakage signature reflection."
+                                        ],
                                         evidence=Evidence(
-                                            request=f"GET {ep.url}?{param}={payload}",
-                                            # We can even save the exact regex match as evidence!
-                                            response=f"Matched Error: {match.group(0)}"
+                                            type="http_snippet",
+                                            request=f"{ep.method} {ep.url}?{param}={payload} HTTP/1.1\nHost: target",
+                                            response=f"HTTP/1.1 {response.status_code}\n\nMatched Database Footprint Signature Error: {match.group(0)}"
                                         )
                                     )
                                 )
                                 findings.append(finding)
-                                break # Stop testing this parameter if we already found an SQLi
+                                # Vulnerability validated for this node parameter; advance loop tracking
+                                break 
                         
         return findings
