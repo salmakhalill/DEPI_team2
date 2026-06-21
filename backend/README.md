@@ -1,95 +1,220 @@
 # NexusFlow Backend
 
-The core scanning engine and API for NexusFlow. Built with Django ASGI, this backend handles automated vulnerability scanning (utilizing Playwright for dynamic crawling), broadcasts real-time telemetry via WebSockets, and generates comprehensive PDF security reports.
+The core scanning engine and API for **NexusFlow**.
+
+This backend is built with **Django ASGI** and provides:
+- Automated vulnerability scanning
+- Dynamic crawling using **Playwright**
+- Real-time scan telemetry via **WebSockets**
+- Automated PDF security report generation
+
+---
 
 ## Prerequisites
 
-- Python 3.10+
+Before running the project, make sure you have:
+
+- Python **3.10+**
 - Git
 
-## Local Setup & Installation
+---
 
-Follow these steps to configure and run the backend environment locally.
+# Local Setup & Installation
 
-### 1. Clone the Repository
+Follow these steps to configure and run the backend locally.
+
+## 1. Clone the Repository
+
 ```bash
 git clone <repository_url>
 cd <repository_directory>
 ```
-2. Configure the Virtual Environment
-It is highly recommended to run this project within an isolated virtual environment.
 
-For Windows:
+---
 
-```Bash
+## 2. Create & Activate Virtual Environment
+
+It is recommended to run the project inside an isolated virtual environment.
+
+### Windows
+
+```bash
 python -m venv venv
 venv\Scripts\activate
 ```
 
-3. Install Dependencies
-Install the required Python packages from the requirements file:
+---
 
-```Bash
+## 3. Install Dependencies
+
+Install all required Python packages:
+
+```bash
 pip install -r requirements.txt
 ```
-4. Initialize Playwright
-The scanner utilizes Playwright for headless browser interaction and dynamic attack surface mapping. You must install the required Chromium binaries:
 
-```Bash
+---
+
+## 4. Install Playwright Browser
+
+The scanner uses Playwright for headless browser interaction and dynamic attack surface mapping.
+
+Install the required Chromium binaries:
+
+```bash
 playwright install chromium
 ```
-5. Database Migrations
-Apply the initial schema structures to your local SQLite database:
 
-```Bash
+---
+
+## 5. Apply Database Migrations
+
+Initialize the database schema:
+
+```bash
 python manage.py makemigrations
 python manage.py migrate
 ```
-6. Start the Development Server
-Launch the ASGI development server to support both standard HTTP requests and asynchronous WebSocket connections:
 
-```Bash
+---
+
+## 6. Run Development Server
+
+Start the ASGI server to support:
+
+- HTTP requests
+- WebSocket connections
+
+```bash
 python manage.py runserver
 ```
-Note: Ensure the terminal outputs Starting ASGI/Daphne version ... upon successful launch. If it defaults to WSGI, WebSocket functionality will not work.
 
-API & WebSocket Reference
-The following endpoints are exposed for frontend integration:
+> **Note:**  
+> Make sure the terminal shows:
+>
+> `Starting ASGI/Daphne version ...`
+>
+> If the server starts as WSGI, WebSocket functionality will not work.
 
-1. Start a New Scan
-Initializes a new penetration testing instance.
+---
 
-Endpoint: POST /api/scan/start/
+# API & WebSocket Reference
 
-Payload: 
+The backend exposes the following endpoints for frontend integration.
+
+---
+
+## 1. Start a New Scan
+
+Creates a new penetration testing scan instance.
+
+### Endpoint
+
+```
+POST /api/scan/start/
+```
+
+### Payload
+
 ```json
 {
-"target_url": "http://example.com",
-"raw_cookie_header": "session=token123"
+  "target_url": "http://example.com",
+  "raw_cookie_header": "session=token123"
 }
 ```
 
-Returns: HTTP 201 Created with the unique scan_id.
+### Response
 
-2. Live Scan Telemetry
+Returns:
+
+```
+HTTP 201 Created
+```
+
+with the generated unique:
+
+```
+scan_id
+```
+
+---
+
+## 2. Live Scan Telemetry
+
 Streams real-time execution logs and vulnerability discoveries.
 
-Protocol: WebSocket (WS)
+### Protocol
 
-Endpoint: ws://127.0.0.1:8000/ws/scan/<scan_id>/
+```
+WebSocket (WS)
+```
 
-Behavior: Broadcasts JSON messages after a brief 10-second initialization delay.
+### Endpoint
 
-3. Scan Results Summary
-Retrieves a lightweight executive summary for dashboard rendering.
+```
+ws://127.0.0.1:8000/ws/scan/<scan_id>/
+```
 
-Endpoint: GET /api/scan/summary/<scan_id>/
+### Behavior
 
-Returns: HTTP 200 OK with aggregated threat matrices and status.
+- Broadcasts live JSON messages
+- Sends updates after a short initialization delay
 
-4. Download Full PDF Report
-Generates and serves the compiled penetration testing report.
+---
 
-Endpoint: GET /api/scan/report/<scan_id>/
+## 3. Scan Results Summary
 
-Returns: application/pdf file stream.
+Retrieves scan summary data for dashboard rendering.
+
+### Endpoint
+
+```
+GET /api/scan/summary/<scan_id>/
+```
+
+### Response
+
+Returns:
+
+```
+HTTP 200 OK
+```
+
+with:
+
+- Threat matrices
+- Scan status
+- Aggregated results
+
+---
+
+## 4. Download PDF Security Report
+
+Generates and returns the complete penetration testing report.
+
+### Endpoint
+
+```
+GET /api/scan/report/<scan_id>/
+```
+
+### Response
+
+Returns:
+
+```
+application/pdf
+```
+
+PDF report file stream.
+
+---
+
+# Project Architecture Overview
+
+NexusFlow backend consists of:
+
+- **Django ASGI API**
+- **Playwright-based scanning engine**
+- **WebSocket real-time communication layer**
+- **Automated security report generator**
