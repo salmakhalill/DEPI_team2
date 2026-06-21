@@ -66,7 +66,8 @@ Payload:
 {
 "target_url": "http://example.com",
 "raw_cookie_header": "session=token123"
-}```
+}
+```
 
 Returns: HTTP 201 Created with the unique scan_id.
 
