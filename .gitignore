@@ -3,6 +3,9 @@ __pycache__/
 *.pyc
 db.sqlite3
 .env
+venv
 *.pdf
 tree.txt
 notes.md
+tests
+test_crawler.py
