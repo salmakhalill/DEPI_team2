@@ -10,8 +10,7 @@ class Orchestrator:
         self.target_url = target_url
         self.cookies = cookies or {}
         self.start_time = datetime.utcnow()
-        # the list of scanner classes to run (team will add their classes here)
-        self.scanners = [] 
+        self.scanners = [] # Container array for active technical assessment extensions
 
     def register_scanner(self, scanner_instance):
         self.scanners.append(scanner_instance)
@@ -27,7 +26,7 @@ class Orchestrator:
         print("[*] Phase 2: Vulnerability Assessment (Concurrent Scans)")
         all_findings: List[Finding] = []
         
-        # run all registered scanners in parallel
+        # Multithreaded execution loop across separate vulnerability scanning plugins
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             future_to_scanner = {
                 executor.submit(scanner.execute, endpoints): scanner 
@@ -38,41 +37,41 @@ class Orchestrator:
                 if findings:
                     all_findings.extend(findings)
 
-        print("[*] Phase 3: Reporting & Formatting")
+        print("[*] Phase 3: Generating Dynamic Payload")
         return self._build_master_json(all_findings)
 
     def _build_master_json(self, findings: List[Finding]) -> Dict[str, Any]:
         end_time = datetime.utcnow()
         duration = (end_time - self.start_time).total_seconds()
         
-        # calculate distribution for the charts
         distribution = {"critical": 0, "high": 0, "medium": 0, "low": 0}
-        findings_table = []
+        findings_summary_table = []
         
         for f in findings:
             severity = f.threat_level.lower()
             if severity in distribution:
                 distribution[severity] += 1
                 
-            findings_table.append({
+            findings_summary_table.append({
                 "id": f.id,
                 "finding_name": f.title,
                 "risk": f.threat_level,
                 "status": f.status
             })
 
-        # overall risk logic
+        # Process logical overall risk threshold calculation
         overall_threat = "Low"
         if distribution["critical"] > 0: overall_threat = "Critical"
         elif distribution["high"] > 0: overall_threat = "High"
         elif distribution["medium"] > 0: overall_threat = "Medium"
 
-        # The Exact JSON Contract for the Reporter Module
+        # Return structural API contract containing dynamic assessment metadata only
         return {
             "report_metadata": {
                 "document_number": "T1-51.001",
-                "document_name": "Web Application Penetration Testing Report",
-                "document_author": "Scanner Engine (Automated)",
+                "document_name": "NexusFlow SaaS Penetration Testing Report",
+                "date_generated": self.start_time.strftime("%Y-%m-%d"),
+                "document_author": "Automated Scanner Engine",
                 "document_review": "Tech Lead"
             },
             "scope": {
@@ -85,7 +84,7 @@ class Orchestrator:
             "executive_summary": {
                 "overall_threat_level": overall_threat,
                 "aggregated_threat_distribution": distribution,
-                "findings_table": findings_table
+                "findings_summary_table": findings_summary_table
             },
-            "findings": [f.to_dict() for f in findings]
+            "detailed_findings": [f.to_dict() for f in findings]
         }

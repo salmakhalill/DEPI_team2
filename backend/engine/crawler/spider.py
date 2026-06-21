@@ -4,7 +4,7 @@ from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeo
 class PlaywrightSpider:
     def __init__(self, target_url: str, cookies: dict = None):
         self.target_url = target_url
-        self.domain = urlparse(target_url).netloc
+        self.domain = urlparse(target_url).hostname 
         self.cookies = cookies or {}
         self.discovered_urls = set()
         self.discovered_forms = []
@@ -16,16 +16,20 @@ class PlaywrightSpider:
                 "name": name,
                 "value": value,
                 "domain": self.domain,
-                "path": "/"
+                "path": "/",
+                # Explicitly override security flags to force Chromium state synchronization
+                "httpOnly": True,
+                "secure": False,
+                "sameSite": "Lax"
             })
         return formatted
 
     def _handle_response(self, response):
         url = response.url
-        if urlparse(url).netloc == self.domain:
+        if urlparse(url).hostname == self.domain:
             self.discovered_urls.add(url)
 
-    def crawl(self, max_pages: int = 20) -> dict:
+    def crawl(self, max_pages: int = 60) -> dict:
         to_visit = [self.target_url]
         visited = set()
         
@@ -33,55 +37,72 @@ class PlaywrightSpider:
             browser = p.chromium.launch(headless=True)
             context = browser.new_context(ignore_https_errors=True)
             
+            # Layer 1: Inject Structural Storage Jar Parameters (Crucial for Flask Sessions)
             if self.cookies:
                 context.add_cookies(self._format_cookies_for_playwright())
+                
+                # Layer 2: Force Global Raw String Headers Injection Fallback
+                raw_cookie_string = "; ".join([f"{k}={v}" for k, v in self.cookies.items()])
+                context.set_extra_http_headers({
+                    "Cookie": raw_cookie_string,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.9"
+                })
                 
             page = context.new_page()
             page.on("response", self._handle_response)
             
-            # Deep Crawl Loop
+            try:
+                print(f"  [Spider] Injecting forced structural authentication mapping layer...")
+                # Force browser context execution flow to settle down completely
+                page.goto(self.target_url, wait_until="networkidle", timeout=15000)
+                page.wait_for_timeout(2000) 
+                
+                resolved_url = page.url
+                if resolved_url not in to_visit:
+                    to_visit.append(resolved_url)
+            except Exception as e:
+                print(f"  [-] Session initialization warning: {str(e)}")
+            
             while to_visit and len(visited) < max_pages:
                 current_url = to_visit.pop(0)
+                normalized_url = current_url.rstrip('/').split('#')[0]
                 
-                # skip already visited or static files
-                if current_url in visited or any(current_url.endswith(ext) for ext in ['.css', '.js', '.png', '.jpg']):
+                if normalized_url in visited or any(current_url.endswith(ext) for ext in ['.css', '.js', '.png', '.jpg', '.jpeg', '.svg', '.gif']):
                     continue
                     
-                visited.add(current_url)
+                visited.add(normalized_url)
                 print(f"  [Spider] Crawling: {current_url}")
                 
                 try:
-                    # use domcontentloaded for faster crawling instead of networkidle
-                    page.goto(current_url, wait_until="domcontentloaded", timeout=10000)
+                    page.goto(current_url, wait_until="load", timeout=12000)
                     
-                    # Extract links
                     hrefs = page.evaluate("""() => {
                         return Array.from(document.querySelectorAll('a')).map(a => a.href);
                     }""")
                     
                     for href in hrefs:
-                        if href and urlparse(href).netloc == self.domain:
-                            self.discovered_urls.add(href)
-                            if href not in visited and href not in to_visit:
-                                to_visit.append(href)
+                        if href:
+                            clean_href = href.split('#')[0].rstrip('/')
+                            if urlparse(clean_href).hostname == self.domain:
+                                self.discovered_urls.add(href)
+                                if clean_href not in visited and href not in to_visit:
+                                    to_visit.append(href)
                             
-                    # Extract HTML forms
                     forms = page.evaluate("""() => {
                         return Array.from(document.forms).map(f => {
                             return {
                                 action: f.action || document.location.href,
                                 method: f.method || 'GET',
-                                inputs: Array.from(f.elements)
-                                    .filter(e => e.name)
-                                    .map(e => e.name)
+                                inputs: Array.from(f.elements).filter(e => e.name).map(e => e.name)
                             };
                         });
                     }""")
                     self.discovered_forms.extend(forms)
                             
                 except PlaywrightTimeoutError:
-                    pass # silently skip slow pages during crawl
-                except Exception as e:
+                    pass 
+                except Exception:
                     pass
                     
             browser.close()

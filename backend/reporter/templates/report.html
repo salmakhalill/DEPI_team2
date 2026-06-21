@@ -1,37 +1,261 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Scan Report</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #2c3e50; line-height: 1.6; margin: 0; padding: 0; }
+        .page-break { page-break-before: always; }
+        .text-center { text-align: center; }
+        
+        /* Clean & Premium Design Aesthetics */
+        .cover-page { margin-top: 250px; text-align: center; }
+        .cover-title { font-size: 42px; font-weight: 700; color: #1a5276; text-transform: uppercase; letter-spacing: 2px; }
+        .cover-subtitle { font-size: 24px; color: #7f8c8d; margin-bottom: 50px; }
+        
+        .section-title { color: #1a5276; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-top: 40px; font-size: 24px; }
+        .subsection-title { color: #2980b9; margin-top: 25px; font-size: 18px; }
+        
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; font-size: 14px; }
+        th, td { border: 1px solid #bdc3c7; padding: 12px; text-align: left; }
+        th { background-color: #ecf0f1; color: #2c3e50; font-weight: 600; }
+        
+        /* Findings Boxes */
+        .finding-table th { width: 25%; background-color: #f8f9f9; }
+        .evidence-box { background-color: #1e1e1e; color: #d4d4d4; padding: 15px; font-family: 'Courier New', Courier, monospace; border-radius: 6px; white-space: pre-wrap; font-size: 12px; margin-top: 10px; }
+        
+        /* Risk Colors */
+        .risk-Critical { color: #8b0000; font-weight: 700; }
+        .risk-High { color: #dc3545; font-weight: 700; }
+        .risk-Medium { color: #ffc107; font-weight: 700; }
+        .risk-Low { color: #28a745; font-weight: 700; }
+        
+        ul, ol { margin-top: 5px; margin-bottom: 15px; }
+    </style>
 </head>
 <body>
 
-<h1>Web Vulnerability Report</h1>
+    <div class="cover-page">
+        <div class="cover-title">{{ data.report_metadata.document_name }}</div>
+        <div class="cover-subtitle">Confidential Report</div>
+        <table style="width: 60%; margin: 80px auto; text-align: left;">
+            <tr><th>Document Number</th><td>{{ data.report_metadata.document_number }}</td></tr>
+            <tr><th>Issue Date</th><td>{{ data.report_metadata.date_generated.split('T')[0] }}</td></tr>
+        </table>
+    </div>
 
-<p><strong>Target:</strong> {{ target_url }}</p>
-<p><strong>Date:</strong> {{ scan_date }}</p>
+    <div class="page-break"></div>
 
-<hr>
+    <h2 class="section-title">Document Control</h2>
+    <table>
+        <tr><th>Document Name</th><td>{{ data.report_metadata.document_name }}</td></tr>
+        <tr><th>Description</th><td>Automated Web Application Vulnerability Assessment</td></tr>
+        <tr><th>Document Author</th><td>{{ data.report_metadata.document_author }}</td></tr>
+        <tr><th>Document Review</th><td>{{ data.report_metadata.document_review }}</td></tr>
+    </table>
 
-{% for v in vulnerabilities %}
+    <h2 class="subsection-title">Version Control</h2>
+    <table>
+        <tr><th>Description</th><th>Issue Number</th><th>Issue Date</th><th>Reviewer</th></tr>
+        <tr><td>Initial Report</td><td>1.0</td><td>{{ data.report_metadata.date_generated.split('T')[0] }}</td><td>{{ data.report_metadata.document_review }}</td></tr>
+    </table>
 
-    <h2>{{ v.name }}</h2>
-    <p><strong>Severity:</strong> {{ v.severity }}</p>
-    <p><strong>Status:</strong> {{ v.status }}</p>
+    <div class="page-break"></div>
+    <h2 class="section-title">Table of Contents</h2>
+    <div style="font-size: 16px; line-height: 2;">
+        <a href="#exec-summary" style="text-decoration: none; color: #2c3e50;">1. Executive Summary</a><br>
+        <a href="#intro" style="text-decoration: none; color: #2c3e50;">2. Introduction</a><br>
+        <a href="#scope" style="text-decoration: none; color: #2c3e50;">3. Scope</a><br>
+        <a href="#methodology" style="text-decoration: none; color: #2c3e50;">4. Methodology</a><br>
+        <a href="#findings" style="text-decoration: none; color: #2c3e50;">5. Detailed Findings</a><br>
+        <div style="margin-left: 20px;">
+            {% for f in data.executive_summary.findings_summary_table %}
+                <a href="#vuln-{{ f.id }}" style="text-decoration: none; color: #34495e;">5.{{ loop.index }} {{ f.finding_name }}</a><br>
+            {% endfor %}
+        </div>
+        <a href="#recommendations" style="text-decoration: none; color: #2c3e50;">6. General Recommendations</a><br>
+        <a href="#compliance" style="text-decoration: none; color: #2c3e50;">7. Compliance and Code of Practice</a><br>
+    </div>
 
-    <p><strong>Payload Used:</strong></p>
-    <pre>{{ v.payload_used }}</pre>
+    <div class="page-break"></div>
 
-    <p><strong>Technical Timeline:</strong></p>
+    <h2 class="section-title">1. Executive Summary</h2>
+    <p>This report presents the results of the penetration testing engagement conducted against the Target Web Application. Based on the findings identified during testing, the overall threat level of the application is rated as <strong class="risk-{{ data.executive_summary.overall_threat_level }}">{{ data.executive_summary.overall_threat_level }}</strong>. It is strongly recommended that the identified vulnerabilities be remediated as a priority.</p>
+
+    {% set critical = data.detailed_findings | selectattr('threat_level', 'equalto', 'Critical') | list %}
+    {% set high = data.detailed_findings | selectattr('threat_level', 'equalto', 'High') | list %}
+    {% set medium = data.detailed_findings | selectattr('threat_level', 'equalto', 'Medium') | list %}
+    {% set low = data.detailed_findings | selectattr('threat_level', 'equalto', 'Low') | list %}
+
+    {% if critical|length > 0 %}
+    <p>During the assessment, <strong>{{ critical|length }} Critical risk finding(s)</strong> were identified:</p>
     <ul>
-        {% for step in v.technical_timeline %}
-            <li>
-                <strong>{{ step.step }}:</strong>
-                {{ step.detail }}
-            </li>
+        {% for f in critical %}<li><strong>{{ f.title }}</strong> — {{ f.description }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if high|length > 0 %}
+    <p>In addition, <strong>{{ high|length }} High risk finding(s)</strong> were identified:</p>
+    <ul>
+        {% for f in high %}<li><strong>{{ f.title }}</strong> — {{ f.description }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if medium|length > 0 %}
+    <p>Furthermore, <strong>{{ medium|length }} Medium risk finding(s)</strong> were found:</p>
+    <ul>
+        {% for f in medium %}<li><strong>{{ f.title }}</strong> — {{ f.description }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if low|length > 0 %}
+    <p>Finally, <strong>{{ low|length }} Low risk finding(s)</strong> were identified:</p>
+    <ul>
+        {% for f in low %}<li><strong>{{ f.title }}</strong> — {{ f.description }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    <h3 class="subsection-title">1.1 Aggregated Threat Distribution</h3>
+    <div class="text-center"><img src="{{ donut_chart }}" style="width: 450px;"></div>
+
+    <h3 class="subsection-title">1.2 Individual Threat Distribution</h3>
+    <div class="text-center"><img src="{{ bar_chart }}" style="width: 600px;"></div>
+
+    <h3 class="subsection-title">1.3 Findings Table</h3>
+    <table>
+        <tr><th>ID</th><th>Finding</th><th>Risk</th><th>Status</th></tr>
+        {% for item in data.executive_summary.findings_summary_table %}
+        <tr>
+            <td>{{ item.id }}</td>
+            <td>{{ item.finding_name }}</td>
+            <td class="risk-{{ item.risk }}">{{ item.risk }}</td>
+            <td>{{ item.status }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="page-break"></div>
+
+    <h2 class="section-title">2. Introduction</h2>
+    <p>In order to ensure the security of the organization, this automated assessment was commissioned to perform web application penetration testing as part of ongoing efforts to improve the overall IT security posture. This engagement targeted the Application detailed in the Scope section.</p>
+
+    <h2 class="section-title">3. Scope</h2>
+    <p>The scope of this engagement comprises web application penetration testing. The assessment timeline and target endpoints are documented below.</p>
+    
+    <h3 class="subsection-title">3.1 Timeline</h3>
+    <table>
+        <tr><th>Start Date</th><th>Duration (Seconds)</th></tr>
+        <tr><td>{{ data.scope.timeline.start_date }}</td><td>{{ data.scope.timeline.duration_seconds }}</td></tr>
+    </table>
+
+    <h3 class="subsection-title">3.2 Targets</h3>
+    <table>
+        <tr><th>#</th><th>URL</th></tr>
+        {% for target in data.scope.targets %}
+        <tr><td>{{ loop.index }}</td><td>{{ target.url }}</td></tr>
+        {% endfor %}
+    </table>
+
+    <h3 class="subsection-title">3.3 Limitations</h3>
+    <p>The results presented in this report reflect the state of the application at a specific point in time. Exploitation techniques such as Denial of Service (DoS) and Distributed Denial of Service (DDoS) were explicitly excluded.</p>
+
+    <div class="page-break"></div>
+
+    <h2 class="section-title">4. Methodology</h2>
+    <p>{{ data.methodology.intro_text }}</p>
+    <ul>
+        {% for phase in data.methodology.phases %}
+        <li><strong>{{ phase }}</strong></li>
         {% endfor %}
     </ul>
 
-    <hr>
+    <div class="text-center" style="margin-top: 30px;">
+        <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="200" cy="200" r="150" fill="none" stroke="#bdc3c7" stroke-width="3" stroke-dasharray="10,10"/>
+            <circle cx="200" cy="50" r="45" fill="#2980b9"/>
+            <text x="200" y="45" fill="white" font-size="12" font-family="Arial" text-anchor="middle" font-weight="bold">Information</text>
+            <text x="200" y="60" fill="white" font-size="12" font-family="Arial" text-anchor="middle" font-weight="bold">Gathering</text>
 
-{% endfor %}
+            <circle cx="342" cy="153" r="45" fill="#2980b9"/>
+            <text x="342" y="148" fill="white" font-size="12" font-family="Arial" text-anchor="middle" font-weight="bold">Vulnerability</text>
+            <text x="342" y="163" fill="white" font-size="12" font-family="Arial" text-anchor="middle" font-weight="bold">Identification</text>
+
+            <circle cx="288" cy="321" r="45" fill="#2980b9"/>
+            <text x="288" y="326" fill="white" font-size="12" font-family="Arial" text-anchor="middle" font-weight="bold">Penetration</text>
+
+            <circle cx="112" cy="321" r="45" fill="#2980b9"/>
+            <text x="112" y="316" fill="white" font-size="12" font-family="Arial" text-anchor="middle" font-weight="bold">Enumerating</text>
+            <text x="112" y="331" fill="white" font-size="12" font-family="Arial" text-anchor="middle" font-weight="bold">Further</text>
+
+            <circle cx="58" cy="153" r="45" fill="#2980b9"/>
+            <text x="58" y="158" fill="white" font-size="12" font-family="Arial" text-anchor="middle" font-weight="bold">Reporting</text>
+        </svg>
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2 class="section-title">5. Findings</h2>
+    <p>This section details each vulnerability identified during the engagement, including technical descriptions, impact, and proof-of-concept steps.</p>
+
+    {% for finding in data.detailed_findings %}
+    <h3 class="subsection-title" style="border-bottom: 1px solid #ccc; padding-bottom: 5px;">{{ finding.id }}: {{ finding.title }}</h3>
+    <table class="finding-table">
+        <tr><th>OWASP Category</th><td>{{ finding.owasp_category }}</td></tr>
+        <tr><th>Threat Level</th><td class="risk-{{ finding.threat_level }}">{{ finding.threat_level }}</td></tr>
+        <tr><th>CVSS Score</th><td>{{ finding.cvss_score }}</td></tr>
+        <tr><th>Affected Path</th><td>{{ finding.affected_path }}</td></tr>
+        <tr><th>Description</th><td>{{ finding.description }}</td></tr>
+        <tr><th>Business Impact</th><td>{{ finding.business_impact }}</td></tr>
+        <tr>
+            <th>Recommendations</th>
+            <td>
+                <ul style="margin:0; padding-left: 15px;">
+                    {% for rec in finding.recommendations %}<li>{{ rec }}</li>{% endfor %}
+                </ul>
+            </td>
+        </tr>
+    </table>
+    
+    <h4>Proof of Concept</h4>
+    <p>{{ finding.proof_of_concept.intro_text }}</p>
+    <ol style="margin-left: 15px;">
+        {% for step in finding.proof_of_concept.steps_to_reproduce %}
+        <li>{{ step }}</li>
+        {% endfor %}
+    </ol>
+    
+    <div class="evidence-box">
+[REQUEST]
+{{ finding.proof_of_concept.evidence.request }}
+
+[RESPONSE]
+{{ finding.proof_of_concept.evidence.response }}
+    </div>
+    <br><br>
+    {% endfor %}
+
+    <div class="page-break"></div>
+
+    <h2 class="section-title">6. General Recommendations</h2>
+    <ul>
+        <li>Enforce authentication and authorization checks consistently across all application endpoints.</li>
+        <li>Implement structured error handling to avoid disclosing sensitive technical information.</li>
+        <li>Establish a recurring penetration testing and vulnerability management cadence.</li>
+    </ul>
+
+    <h2 class="section-title">7. Appendices</h2>
+    <h3 class="subsection-title">7.1 Risk Calculation</h3>
+    <p>The Common Vulnerability Scoring System (CVSS) v3.1 is used as an open framework for communicating the characteristics and severity of software vulnerabilities.</p>
+    <table>
+        <tr><th>Severity</th><th>Base Score Range</th></tr>
+        <tr><td class="risk-Low">Low</td><td>0.1 - 3.9</td></tr>
+        <tr><td class="risk-Medium">Medium</td><td>4.0 - 6.9</td></tr>
+        <tr><td class="risk-High">High</td><td>7.0 - 8.9</td></tr>
+        <tr><td class="risk-Critical">Critical</td><td>9.0 - 10.0</td></tr>
+    </table>
+
+    <h2 class="section-title">8. Compliance and Code of Practice</h2>
+    <p>{{ data.compliance_and_code_of_practice.text }}</p>
 
 </body>
+</html>
