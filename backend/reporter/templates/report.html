@@ -9,11 +9,23 @@
         
         /* Clean & Premium Design Aesthetics */
         .cover-page { margin-top: 250px; text-align: center; }
-        .cover-title { font-size: 42px; font-weight: 700; color: #1a5276; text-transform: uppercase; letter-spacing: 2px; }
-        .cover-subtitle { font-size: 24px; color: #7f8c8d; margin-bottom: 50px; }
+        .cover-title { font-size: 36px; font-weight: 700; color: #1a5276; text-transform: uppercase; letter-spacing: 2px; }
+        .cover-subtitle { font-size: 22px; color: #7f8c8d; margin-bottom: 50px; }
         
         .section-title { color: #1a5276; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-top: 40px; font-size: 24px; }
         .subsection-title { color: #2980b9; margin-top: 25px; font-size: 18px; }
+        
+        /* Premium CSS Table of Contents */
+        .toc-list { display: flex; flex-direction: column; gap: 12px; margin-top: 30px; }
+        .toc-row { display: flex; align-items: flex-end; justify-content: space-between; text-decoration: none; color: #2c3e50; font-size: 16px; }
+        .toc-row:hover { color: #3498db; }
+        .toc-text { position: relative; overflow: hidden; flex-grow: 1; font-weight: 600; }
+        .toc-text::after { content: " . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ."; position: absolute; padding-left: 5px; color: #bdc3c7; white-space: nowrap; }
+        .toc-sub-row { display: flex; align-items: flex-end; justify-content: space-between; text-decoration: none; color: #34495e; font-size: 14px; margin-left: 25px; }
+        .toc-sub-row:hover { color: #3498db; }
+        .toc-sub-text { position: relative; overflow: hidden; flex-grow: 1; }
+        .toc-sub-text::after { content: " . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ."; position: absolute; padding-left: 5px; color: #e5e8e8; white-space: nowrap; }
+        .toc-page { background-color: #fff; padding-left: 8px; font-weight: 700; color: #1a5276; min-width: 15px; text-align: right; }
         
         /* Tables */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; font-size: 14px; }
@@ -22,7 +34,7 @@
         
         /* Findings Boxes */
         .finding-table th { width: 25%; background-color: #f8f9f9; }
-        .evidence-box { background-color: #1e1e1e; color: #d4d4d4; padding: 15px; font-family: 'Courier New', Courier, monospace; border-radius: 6px; white-space: pre-wrap; font-size: 12px; margin-top: 10px; }
+        .evidence-box { background-color: #1e1e1e; color: #d4d4d4; padding: 15px; font-family: 'Courier New', Courier, monospace; border-radius: 6px; white-space: pre-wrap; font-size: 12px; margin-top: 10px; word-wrap: break-word; }
         
         /* Risk Colors */
         .risk-Critical { color: #8b0000; font-weight: 700; }
@@ -36,11 +48,11 @@
 <body>
 
     <div class="cover-page">
-        <div class="cover-title">{{ data.report_metadata.document_name }}</div>
-        <div class="cover-subtitle">Confidential Report</div>
+        <div class="cover-title">Automated Vulnerability Assessment Report</div>
+        <div class="cover-subtitle">Dynamic Application Security Testing (DAST) Summary</div>
         <table style="width: 60%; margin: 80px auto; text-align: left;">
-            <tr><th>Document Number</th><td>{{ data.report_metadata.document_number }}</td></tr>
-            <tr><th>Issue Date</th><td>{{ data.report_metadata.date_generated.split('T')[0] }}</td></tr>
+            <tr><th>Document Number</th><td>{{ dynamic.report_metadata.document_number }}</td></tr>
+            <tr><th>Issue Date</th><td>{{ dynamic.report_metadata.date_generated }}</td></tr>
         </table>
     </div>
 
@@ -48,72 +60,56 @@
 
     <h2 class="section-title">Document Control</h2>
     <table>
-        <tr><th>Document Name</th><td>{{ data.report_metadata.document_name }}</td></tr>
-        <tr><th>Description</th><td>Automated Web Application Vulnerability Assessment</td></tr>
-        <tr><th>Document Author</th><td>{{ data.report_metadata.document_author }}</td></tr>
-        <tr><th>Document Review</th><td>{{ data.report_metadata.document_review }}</td></tr>
+        <tr><th>Document Configuration</th><td>Automated Scanner Output Logs</td></tr>
+        <tr><th>Author</th><td>{{ dynamic.report_metadata.document_author }}</td></tr>
+        <tr><th>Reviewer</th><td>{{ dynamic.report_metadata.document_review }}</td></tr>
     </table>
 
     <h2 class="subsection-title">Version Control</h2>
     <table>
         <tr><th>Description</th><th>Issue Number</th><th>Issue Date</th><th>Reviewer</th></tr>
-        <tr><td>Initial Report</td><td>1.0</td><td>{{ data.report_metadata.date_generated.split('T')[0] }}</td><td>{{ data.report_metadata.document_review }}</td></tr>
+        <tr><td>Initial Automated Engine Export</td><td>1.0</td><td>{{ dynamic.report_metadata.date_generated }}</td><td>{{ dynamic.report_metadata.document_review }}</td></tr>
     </table>
 
     <div class="page-break"></div>
+    
     <h2 class="section-title">Table of Contents</h2>
-    <div style="font-size: 16px; line-height: 2;">
-        <a href="#exec-summary" style="text-decoration: none; color: #2c3e50;">1. Executive Summary</a><br>
-        <a href="#intro" style="text-decoration: none; color: #2c3e50;">2. Introduction</a><br>
-        <a href="#scope" style="text-decoration: none; color: #2c3e50;">3. Scope</a><br>
-        <a href="#methodology" style="text-decoration: none; color: #2c3e50;">4. Methodology</a><br>
-        <a href="#findings" style="text-decoration: none; color: #2c3e50;">5. Detailed Findings</a><br>
-        <div style="margin-left: 20px;">
-            {% for f in data.executive_summary.findings_summary_table %}
-                <a href="#vuln-{{ f.id }}" style="text-decoration: none; color: #34495e;">5.{{ loop.index }} {{ f.finding_name }}</a><br>
-            {% endfor %}
-        </div>
-        <a href="#recommendations" style="text-decoration: none; color: #2c3e50;">6. General Recommendations</a><br>
-        <a href="#compliance" style="text-decoration: none; color: #2c3e50;">7. Compliance and Code of Practice</a><br>
+    <div class="toc-list">
+        <a href="#exec-summary" class="toc-row"><span class="toc-text">1. Executive Summary</span><span class="toc-page">4</span></a>
+        <a href="#intro" class="toc-row"><span class="toc-text">2. Introduction</span><span class="toc-page">5</span></a>
+        
+        <a href="#scope" class="toc-row"><span class="toc-text">3. Scope</span><span class="toc-page">5</span></a>
+        <a href="#scope-1" class="toc-sub-row"><span class="toc-sub-text">3.1 Timeline</span><span class="toc-page">5</span></a>
+        <a href="#scope-2" class="toc-sub-row"><span class="toc-sub-text">3.2 Targets</span><span class="toc-page">5</span></a>
+        {% if dynamic.scope.test_accounts %}
+        <a href="#scope-3" class="toc-sub-row"><span class="toc-sub-text">3.3 Authentication Context & Seed Accounts</span><span class="toc-page">5</span></a>
+        <a href="#scope-4" class="toc-sub-row"><span class="toc-sub-text">3.4 Limitations</span><span class="toc-page">5</span></a>
+        {% else %}
+        <a href="#scope-3" class="toc-sub-row"><span class="toc-sub-text">3.3 Limitations</span><span class="toc-page">5</span></a>
+        {% endif %}
+
+        <a href="#methodology" class="toc-row"><span class="toc-text">4. Automated Assessment Methodology</span><span class="toc-page">6</span></a>
+        {% for phase in static.methodology.phases %}
+        <a href="#meth-{{ loop.index }}" class="toc-sub-row"><span class="toc-sub-text">{{ phase.name }}</span><span class="toc-page">6</span></a>
+        {% endfor %}
+
+        <a href="#findings" class="toc-row"><span class="toc-text">5. Detailed Findings</span><span class="toc-page">7</span></a>
+        {% for f in dynamic.executive_summary.findings_summary_table %}
+        <a href="#vuln-{{ f.id }}" class="toc-sub-row"><span class="toc-sub-text">5.{{ loop.index }} {{ f.finding_name }}</span><span class="toc-page">7</span></a>
+        {% endfor %}
+        
+        <a href="#recommendations" class="toc-row" style="margin-top: 10px;"><span class="toc-text">6. General Recommendations</span><span class="toc-page">8</span></a>
+        
+        <a href="#compliance" class="toc-row"><span class="toc-text">7. Appendices & Compliance Matrix</span><span class="toc-page">9</span></a>
+        <a href="#comp-1" class="toc-sub-row"><span class="toc-sub-text">7.1 Risk Calculation framework</span><span class="toc-page">9</span></a>
+        <a href="#comp-2" class="toc-sub-row"><span class="toc-sub-text">{{ static.compliance_and_code_of_practice.title }}</span><span class="toc-page">9</span></a>
+        <a href="#comp-3" class="toc-sub-row"><span class="toc-sub-text">7.3 Conclusion</span><span class="toc-page">9</span></a>
     </div>
 
     <div class="page-break"></div>
 
-    <h2 class="section-title">1. Executive Summary</h2>
-    <p>This report presents the results of the penetration testing engagement conducted against the Target Web Application. Based on the findings identified during testing, the overall threat level of the application is rated as <strong class="risk-{{ data.executive_summary.overall_threat_level }}">{{ data.executive_summary.overall_threat_level }}</strong>. It is strongly recommended that the identified vulnerabilities be remediated as a priority.</p>
-
-    {% set critical = data.detailed_findings | selectattr('threat_level', 'equalto', 'Critical') | list %}
-    {% set high = data.detailed_findings | selectattr('threat_level', 'equalto', 'High') | list %}
-    {% set medium = data.detailed_findings | selectattr('threat_level', 'equalto', 'Medium') | list %}
-    {% set low = data.detailed_findings | selectattr('threat_level', 'equalto', 'Low') | list %}
-
-    {% if critical|length > 0 %}
-    <p>During the assessment, <strong>{{ critical|length }} Critical risk finding(s)</strong> were identified:</p>
-    <ul>
-        {% for f in critical %}<li><strong>{{ f.title }}</strong> — {{ f.description }}</li>{% endfor %}
-    </ul>
-    {% endif %}
-
-    {% if high|length > 0 %}
-    <p>In addition, <strong>{{ high|length }} High risk finding(s)</strong> were identified:</p>
-    <ul>
-        {% for f in high %}<li><strong>{{ f.title }}</strong> — {{ f.description }}</li>{% endfor %}
-    </ul>
-    {% endif %}
-
-    {% if medium|length > 0 %}
-    <p>Furthermore, <strong>{{ medium|length }} Medium risk finding(s)</strong> were found:</p>
-    <ul>
-        {% for f in medium %}<li><strong>{{ f.title }}</strong> — {{ f.description }}</li>{% endfor %}
-    </ul>
-    {% endif %}
-
-    {% if low|length > 0 %}
-    <p>Finally, <strong>{{ low|length }} Low risk finding(s)</strong> were identified:</p>
-    <ul>
-        {% for f in low %}<li><strong>{{ f.title }}</strong> — {{ f.description }}</li>{% endfor %}
-    </ul>
-    {% endif %}
+    <h2 id="exec-summary" class="section-title">1. Executive Summary</h2>
+    <p>This report presents the results of the automated penetration testing engagement conducted dynamically against the Target Web Application. Based on the vulnerability patterns identified during the automated assessment loops, the overall threat level of the application is rated as <strong class="risk-{{ dynamic.executive_summary.overall_threat_level }}">{{ dynamic.executive_summary.overall_threat_level }}</strong>. Immediate patch implementation is recommended across all exposed dynamic injection vectors.</p>
 
     <h3 class="subsection-title">1.1 Aggregated Threat Distribution</h3>
     <div class="text-center"><img src="{{ donut_chart }}" style="width: 450px;"></div>
@@ -124,7 +120,7 @@
     <h3 class="subsection-title">1.3 Findings Table</h3>
     <table>
         <tr><th>ID</th><th>Finding</th><th>Risk</th><th>Status</th></tr>
-        {% for item in data.executive_summary.findings_summary_table %}
+        {% for item in dynamic.executive_summary.findings_summary_table %}
         <tr>
             <td>{{ item.id }}</td>
             <td>{{ item.finding_name }}</td>
@@ -136,41 +132,47 @@
 
     <div class="page-break"></div>
 
-    <h2 class="section-title">2. Introduction</h2>
-    <p>In order to ensure the security of the organization, this automated assessment was commissioned to perform web application penetration testing as part of ongoing efforts to improve the overall IT security posture. This engagement targeted the Application detailed in the Scope section.</p>
+    <h2 id="intro" class="section-title">{{ static.introduction.title }}</h2>
+    <p style="white-space: pre-wrap;">{{ static.introduction.text }}</p>
 
-    <h2 class="section-title">3. Scope</h2>
-    <p>The scope of this engagement comprises web application penetration testing. The assessment timeline and target endpoints are documented below.</p>
-    
-    <h3 class="subsection-title">3.1 Timeline</h3>
+    <h2 id="scope" class="section-title">3. Scope</h2>
+    <p>The scope of this automated assessment encompasses dynamic vulnerability scanning and attack surface crawling. The scanning configurations, target endpoints, and authenticated execution matrix are documented below.</p>
+
+    <h3 id="scope-1" class="subsection-title">3.1 Timeline</h3>
     <table>
-        <tr><th>Start Date</th><th>Duration (Seconds)</th></tr>
-        <tr><td>{{ data.scope.timeline.start_date }}</td><td>{{ data.scope.timeline.duration_seconds }}</td></tr>
+        <tr><th>Start Date</th><th>Automated Scan Duration (Seconds)</th></tr>
+        <tr><td>{{ dynamic.scope.timeline.start_date }}</td><td>{{ dynamic.scope.timeline.duration_seconds }}</td></tr>
     </table>
 
-    <h3 class="subsection-title">3.2 Targets</h3>
+    <h3 id="scope-2" class="subsection-title">3.2 Targets</h3>
     <table>
-        <tr><th>#</th><th>URL</th></tr>
-        {% for target in data.scope.targets %}
+        <tr><th>#</th><th>Target Application Root URL</th></tr>
+        {% for target in dynamic.scope.targets %}
         <tr><td>{{ loop.index }}</td><td>{{ target.url }}</td></tr>
         {% endfor %}
     </table>
 
-    <h3 class="subsection-title">3.3 Limitations</h3>
-    <p>The results presented in this report reflect the state of the application at a specific point in time. Exploitation techniques such as Denial of Service (DoS) and Distributed Denial of Service (DDoS) were explicitly excluded.</p>
+    {% if dynamic.scope.test_accounts %}
+    <h3 id="scope-3" class="subsection-title">3.3 Authentication Context & Seed Accounts</h3>
+    <p>To maximize attack surface coverage across structural navigation layers, the automated engine injected specialized session tokens mapped to the following credentials during the crawling and simulation phases:</p>
+    <table>
+        <tr><th>Target Username</th><th>Target Password</th><th>Assigned Execution Privilege</th></tr>
+        {% for account in dynamic.scope.test_accounts %}
+        <tr><td><code>{{ account.username }}</code></td><td><code>{{ account.password }}</code></td><td>{{ account.role }}</td></tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+
+    <h3 id="{% if dynamic.scope.test_accounts %}scope-4{% else %}scope-3{% endif %}" class="subsection-title">{% if dynamic.scope.test_accounts %}3.4{% else %}3.3{% endif %} Limitations</h3>
+    <p style="white-space: pre-wrap;">{{ static.scope_limitations }}</p>
 
     <div class="page-break"></div>
 
-    <h2 class="section-title">4. Methodology</h2>
-    <p>{{ data.methodology.intro_text }}</p>
-    <ul>
-        {% for phase in data.methodology.phases %}
-        <li><strong>{{ phase }}</strong></li>
-        {% endfor %}
-    </ul>
-
-    <div class="text-center" style="margin-top: 30px;">
-        <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+    <h2 id="methodology" class="section-title">{{ static.methodology.title }}</h2>
+    <p style="white-space: pre-wrap;">{{ static.methodology.intro_text }}</p>
+    
+    <div class="text-center" style="margin-top: 25px; margin-bottom: 25px;">
+        <svg width="360" height="360" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <circle cx="200" cy="200" r="150" fill="none" stroke="#bdc3c7" stroke-width="3" stroke-dasharray="10,10"/>
             <circle cx="200" cy="50" r="45" fill="#2980b9"/>
             <text x="200" y="45" fill="white" font-size="12" font-family="Arial" text-anchor="middle" font-weight="bold">Information</text>
@@ -192,18 +194,30 @@
         </svg>
     </div>
 
+    {% for phase in static.methodology.phases %}
+    <h3 id="meth-{{ loop.index }}" class="subsection-title">{{ phase.name }}</h3>
+    <p>{{ phase.description }}</p>
+    
+        {% if phase.sub_categories %}
+            {% for sub in phase.sub_categories %}
+            <h4 style="color: #2c3e50; font-size: 15px; margin-bottom: 2px; margin-top: 15px;">{{ sub.title }}</h4>
+            <p style="margin-top: 2px; font-size: 14px;">{{ sub.text }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+
     <div class="page-break"></div>
 
-    <h2 class="section-title">5. Findings</h2>
-    <p>This section details each vulnerability identified during the engagement, including technical descriptions, impact, and proof-of-concept steps.</p>
+    <h2 id="findings" class="section-title">5. Detailed Findings</h2>
+    <p>This section details the specific security vulnerabilities identified by the automated scanner engine during fuzzing and dynamic request tracking operations.</p>
 
-    {% for finding in data.detailed_findings %}
-    <h3 class="subsection-title" style="border-bottom: 1px solid #ccc; padding-bottom: 5px;">{{ finding.id }}: {{ finding.title }}</h3>
+    {% for finding in dynamic.detailed_findings %}
+    <h3 id="vuln-{{ finding.id }}" class="subsection-title" style="border-bottom: 2px solid #2980b9; padding-bottom: 5px;">{{ finding.title }}</h3>
     <table class="finding-table">
         <tr><th>OWASP Category</th><td>{{ finding.owasp_category }}</td></tr>
         <tr><th>Threat Level</th><td class="risk-{{ finding.threat_level }}">{{ finding.threat_level }}</td></tr>
         <tr><th>CVSS Score</th><td>{{ finding.cvss_score }}</td></tr>
-        <tr><th>Affected Path</th><td>{{ finding.affected_path }}</td></tr>
+        <tr><th>Affected Path(s)</th><td style="font-family: monospace; font-size: 13px; color: #c0392b; line-height: 1.6;">{{ finding.affected_path_html|safe }}</td></tr>
         <tr><th>Description</th><td>{{ finding.description }}</td></tr>
         <tr><th>Business Impact</th><td>{{ finding.business_impact }}</td></tr>
         <tr>
@@ -216,36 +230,47 @@
         </tr>
     </table>
     
-    <h4>Proof of Concept</h4>
-    <p>{{ finding.proof_of_concept.intro_text }}</p>
-    <ol style="margin-left: 15px;">
-        {% for step in finding.proof_of_concept.steps_to_reproduce %}
+    <div style="margin-top: 25px;"></div>
+    
+    {% for poc in finding.pocs[:3] %}
+    <h4 style="color: #2c3e50; margin-top: 30px; font-size: 16px; border-left: 3px solid #2980b9; padding-left: 8px;">{{ loop.index }}. Proof of Concept</h4>
+    <p style="font-style: italic; color: #7f8c8d; font-size: 14px; margin-bottom: 8px;">{{ poc.intro_text }}</p>
+    <ol style="padding-left: 20px; margin-top: 5px;">
+        {% for step in poc.steps_to_reproduce %}
         <li>{{ step }}</li>
         {% endfor %}
     </ol>
     
     <div class="evidence-box">
-[REQUEST]
-{{ finding.proof_of_concept.evidence.request }}
+<strong>[REQUEST]</strong>
+{{ poc.evidence.request }}
 
-[RESPONSE]
-{{ finding.proof_of_concept.evidence.response }}
+<strong>[RESPONSE]</strong>
+{{ poc.evidence.response }}
     </div>
-    <br><br>
     {% endfor %}
+
+    {% if finding.pocs|length > 3 %}
+    <p style="background-color: #fff3cd; color: #856404; padding: 10px; border-left: 4px solid #ffeeba; margin-top: 20px; font-size: 13px;">
+        <em><strong>Note:</strong> Displaying Proof of Concept for the first 3 vulnerable endpoints. An additional <strong>{{ finding.pocs|length - 3 }}</strong> vulnerable parameters were confirmed utilizing identical exploitation techniques as listed in the Affected Paths table above.</em>
+    </p>
+    {% endif %}
+    
+    <div class="page-break"></div>
+    {% endfor %}
+
+    <h2 id="recommendations" class="section-title">6. General Recommendations</h2>
+    <ul>
+        {% for rec in static.general_recommendations %}
+        <li>{{ rec }}</li>
+        {% endfor %}
+    </ul>
 
     <div class="page-break"></div>
 
-    <h2 class="section-title">6. General Recommendations</h2>
-    <ul>
-        <li>Enforce authentication and authorization checks consistently across all application endpoints.</li>
-        <li>Implement structured error handling to avoid disclosing sensitive technical information.</li>
-        <li>Establish a recurring penetration testing and vulnerability management cadence.</li>
-    </ul>
-
-    <h2 class="section-title">7. Appendices</h2>
-    <h3 class="subsection-title">7.1 Risk Calculation</h3>
-    <p>The Common Vulnerability Scoring System (CVSS) v3.1 is used as an open framework for communicating the characteristics and severity of software vulnerabilities.</p>
+    <h2 id="compliance" class="section-title">7. Appendices & Compliance Matrix</h2>
+    <h3 id="comp-1" class="subsection-title">7.1 Risk Calculation framework</h3>
+    <p>{{ static.risk_calculation_desc }}</p>
     <table>
         <tr><th>Severity</th><th>Base Score Range</th></tr>
         <tr><td class="risk-Low">Low</td><td>0.1 - 3.9</td></tr>
@@ -254,8 +279,11 @@
         <tr><td class="risk-Critical">Critical</td><td>9.0 - 10.0</td></tr>
     </table>
 
-    <h2 class="section-title">8. Compliance and Code of Practice</h2>
-    <p>{{ data.compliance_and_code_of_practice.text }}</p>
+    <h3 id="comp-2" class="subsection-title">{{ static.compliance_and_code_of_practice.title }}</h3>
+    <p style="white-space: pre-wrap;">{{ static.compliance_and_code_of_practice.text }}</p>
+
+    <h3 id="comp-3" class="subsection-title">7.3 Conclusion</h3>
+    <p>{{ static.conclusion }}</p>
 
 </body>
 </html>
