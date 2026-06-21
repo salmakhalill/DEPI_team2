@@ -10,12 +10,13 @@ from engine.models.http_context import HttpResponse
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class SafeHttpClient:
-    def __init__(self, headers=None, cookies=None, delay=0.5, timeout=10):
+    # add allow_local flag to toggle SSRF protection during dev/testing
+    def __init__(self, headers=None, cookies=None, delay=0.5, timeout=10, allow_local=False):
         self.session = requests.Session()
         self.delay = delay
         self.timeout = timeout
+        self.allow_local = allow_local # track the environment context
 
-        # spoof user-agent to bypass trivial defense filters
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         })
@@ -33,7 +34,10 @@ class SafeHttpClient:
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
     def _is_safe_url(self, url):
-        # ssrf mitigation: isolate core server from private subnets
+        # bypass restriction if we explicitly allow local targets
+        if self.allow_local:
+            return True
+            
         parsed = urlparse(url)
         forbidden = ['localhost', '127.0.0.1', '0.0.0.0', '192.168.', '10.']
         return not any(host in (parsed.hostname or "") for host in forbidden)

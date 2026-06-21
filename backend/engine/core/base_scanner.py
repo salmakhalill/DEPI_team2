@@ -1,60 +1,33 @@
-import uuid
-from datetime import datetime
+import traceback
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
+from typing import List, Dict, Any
+from engine.models.endpoint import Endpoint
+from engine.models.finding import Finding
+from engine.core.http_client import SafeHttpClient
 
 class BaseScanner(ABC):
-    # Default metadata to be overridden by subclasses
-    VULNERABILITY = "Unknown"
-    SEVERITY = "INFO"
-    CWE = ""
-    OWASP = ""
-    DESCRIPTION = ""
-    REMEDIATION = ""
-
-    def __init__(self, target_url: str, client=None):
+    def __init__(self, target_url: str, client: SafeHttpClient):
         self.target_url = target_url
         self.client = client
 
-    def format_result(self, 
-                      is_vulnerable: bool, 
-                      confidence: str = "",
-                      url: str = "", 
-                      request_data: Optional[Dict[str, Any]] = None,
-                      response_data: Optional[Dict[str, Any]] = None,
-                      proof: Optional[Dict[str, Any]] = None, 
-                      reproduction_steps: Optional[List[str]] = None) -> dict:
-        
-        # Return a minimal dict if no vulnerability is found
-        if not is_vulnerable:
-            return {
-                "vulnerability": self.VULNERABILITY,
-                "is_vulnerable": False
-            }
-
-        # Build the standardized finding structure
-        return {
-            "id": f"vuln-{uuid.uuid4().hex[:8]}",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            
-            "vulnerability": self.VULNERABILITY,
-            "severity": self.SEVERITY,
-            "confidence": confidence,
-            "cwe": self.CWE,
-            "owasp": self.OWASP,
-            "url": url,
-            "description": self.DESCRIPTION,
-            
-            "request": request_data or {},
-            "response": response_data or {},
-            "proof": proof or {},
-            "reproduction_steps": reproduction_steps or [],
-            "remediation": self.REMEDIATION
-        }
+    def execute(self, endpoints: List[Endpoint]) -> List[Finding]:
+        """
+        Wrapper to isolate crashes. The orchestrator calls this, NOT run_scan directly.
+        This ensures one buggy scanner doesn't crash the entire assessment.
+        """
+        try:
+            findings = self.run_scan(endpoints)
+            return findings if findings else []
+        except Exception as e:
+            print(f"[-] [Scanner Crash] {self.__class__.__name__} failed: {str(e)}")
+            # uncomment the next line during active development to see exact errors
+            # traceback.print_exc() 
+            return []
 
     @abstractmethod
-    def run_scan(self):
+    def run_scan(self, endpoints: List[Endpoint]) -> List[Finding]:
         """
-        Execute the scanning logic. Must be implemented by all scanners.
+        Team members MUST implement this method.
+        It should iterate over endpoints, inject payloads, and return a list of Finding objects.
         """
         pass

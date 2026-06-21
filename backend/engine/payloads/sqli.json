@@ -1,0 +1,23 @@
+{
+  "vulnerability": "SQL Injection",
+  "cases": [
+    {
+      "id": "sqli-error-01",
+      "payload": "'",
+      "match_regex": "(?i)(sqlite3\\.OperationalError|syntax error|unrecognized token)",
+      "description": "Trigger verbose SQLite error messages."
+    },
+    {
+      "id": "sqli-union-01",
+      "payload": "' UNION SELECT NULL--",
+      "match_regex": "(?i)(wrong number of result columns)",
+      "description": "Test for UNION-based injection column mismatch."
+    },
+    {
+      "id": "sqli-boolean-true",
+      "payload": "' AND '1'='1",
+      "match_regex": ".*", 
+      "description": "Boolean true condition (needs baseline comparison in scanner logic)."
+    }
+  ]
+}
