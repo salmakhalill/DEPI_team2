@@ -1,7 +1,7 @@
 from django.urls import path
-from . import views
+from .views import StartScanView, DownloadReportView
 
 urlpatterns = [
-    path('', views.home),
+    path('scan/start/', StartScanView.as_view(), name='start_scan'),
+    path('scan/<uuid:scan_id>/report/', DownloadReportView.as_view(), name='download_report'),
 ]
-

