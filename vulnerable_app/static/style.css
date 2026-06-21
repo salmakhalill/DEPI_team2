@@ -1,0 +1,174 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+}
+
+.banner {
+    background: #b91c1c;
+    color: #fff;
+    text-align: center;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
+.navbar {
+    background: #1d1d1f;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+}
+
+.navbar-brand a {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-decoration: none;
+}
+
+.navbar-links a {
+    color: #ddd;
+    margin-left: 16px;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.navbar-links a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+h1 {
+    margin-top: 0;
+}
+
+.flash-box {
+    background: #fff3cd;
+    border: 1px solid #ffe69c;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.flash-message {
+    font-size: 0.9rem;
+}
+
+.form, .form-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 420px;
+    margin-bottom: 20px;
+}
+
+.form-inline {
+    flex-direction: row;
+    max-width: 100%;
+}
+
+.form label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: 6px;
+}
+
+.form input, .form textarea, .form-inline input {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.form-inline input {
+    flex: 1;
+}
+
+button {
+    background: #0071e3;
+    color: #fff;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    margin-top: 6px;
+}
+
+button:hover {
+    background: #0077ed;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    background: #fff;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.profile-table th {
+    width: 140px;
+    background: #f0f0f0;
+}
+
+.comment-list {
+    list-style: none;
+    padding: 0;
+}
+
+.comment-list li {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+}
+
+.timestamp {
+    color: #888;
+    font-size: 0.8rem;
+    margin-left: 8px;
+}
+
+.comment-content {
+    margin-top: 4px;
+}
+
+.note {
+    color: #555;
+    font-size: 0.85rem;
+}
+
+.error {
+    color: #b91c1c;
+}
+
+footer {
+    text-align: center;
+    color: #888;
+    font-size: 0.8rem;
+    padding: 20px;
+}

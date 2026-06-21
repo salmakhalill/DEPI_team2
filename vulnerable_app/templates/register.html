@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Register - VulnShop{% endblock %}
+{% block content %}
+    <h1>Register</h1>
+    <form method="POST" action="{{ url_for('register') }}" class="form">
+        <label>Username</label>
+        <input type="text" name="username" required>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <label>Email</label>
+        <input type="email" name="email">
+
+        <label>Bio</label>
+        <textarea name="bio" rows="3"></textarea>
+
+        <button type="submit">Create account</button>
+    </form>
+    <p>Already have an account? <a href="{{ url_for('login') }}">Log in</a>.</p>
+{% endblock %}

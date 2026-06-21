@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Login - VulnShop{% endblock %}
+{% block content %}
+    <h1>Login</h1>
+    <form method="POST" action="{{ url_for('login') }}" class="form">
+        <label>Username</label>
+        <input type="text" name="username" required>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <button type="submit">Log in</button>
+    </form>
+    <p>Demo accounts: <code>admin/admin123</code>, <code>alice/alice123</code>, <code>bob/bob123</code></p>
+    <p>No account? <a href="{{ url_for('register') }}">Register here</a>.</p>
+{% endblock %}

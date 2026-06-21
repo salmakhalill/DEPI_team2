@@ -1,0 +1,5 @@
+INTERNAL NOTES - DO NOT SHARE
+------------------------------
+TODO: rotate the demo admin password (currently admin123)
+TODO: disable the legacy /download endpoint before launch
+Backup credentials file: backup_credentials.txt

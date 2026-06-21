@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Search - VulnShop{% endblock %}
+{% block content %}
+    <h1>Search users</h1>
+    <form method="GET" action="{{ url_for('search') }}" class="form-inline">
+        <input type="text" name="q" placeholder="Search by username..." value="{{ query }}">
+        <button type="submit">Search</button>
+    </form>
+
+    {% if query %}
+        <p>Showing results for: {{ query|safe }}</p>
+    {% endif %}
+
+    {% if error %}
+        <p class="error">Database error: {{ error }}</p>
+    {% endif %}
+
+    {% if results %}
+        <table class="results-table">
+            <tr><th>ID</th><th>Username</th><th>Email</th><th>Bio</th></tr>
+            {% for r in results %}
+            <tr>
+                <td>{{ r[0] }}</td>
+                <td>{{ r[1] }}</td>
+                <td>{{ r[2] }}</td>
+                <td>{{ r[3] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% elif query %}
+        <p>No results found.</p>
+    {% endif %}
+{% endblock %}

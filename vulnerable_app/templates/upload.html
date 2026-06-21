@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Upload - VulnShop{% endblock %}
+{% block content %}
+    <h1>Upload a file</h1>
+    <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data" class="form">
+        <label>Choose file</label>
+        <input type="file" name="file" required>
+        <button type="submit">Upload</button>
+    </form>
+    <p class="note">No file type or size restrictions are enforced (by design, for this demo).</p>
+
+    <h2>All uploaded files</h2>
+    {% if files %}
+        <table class="results-table">
+            <tr><th>Uploaded by</th><th>File</th><th>When</th><th>Links</th></tr>
+            {% for f in files %}
+            <tr>
+                <td>{{ f['username'] }}</td>
+                <td>{{ f['original_name'] }}</td>
+                <td>{{ f['uploaded_at'] }}</td>
+                <td>
+                    <a href="{{ url_for('serve_upload', filename=f['filename']) }}">view</a> |
+                    <a href="{{ url_for('download', filename=f['filename']) }}">download</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No files uploaded yet.</p>
+    {% endif %}
+{% endblock %}
