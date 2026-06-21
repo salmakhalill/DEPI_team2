@@ -1,5 +1,9 @@
 import os
+import time
 import threading
+import traceback
+import asyncio
+import platform
 from django.utils import timezone
 from django.http import FileResponse
 from rest_framework.views import APIView
@@ -12,18 +16,31 @@ from reporter.report_generator import generate_pdf
 from engine.scanners.sqli_scanner import SQLInjectionScanner
 
 def run_scan_in_background(scan_id, target_url, dynamic_cookies):
+    # FIX: Windows specific thread setup for Playwright asyncio subprocesses
+    if platform.system() == 'Windows':
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    
+    # Initialize a new event loop for this specific background thread
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    # Temporary wait to allow WebSocket frontend connection
+    time.sleep(10) 
+
     try:
         scan = Scan.objects.get(id=scan_id)
-        orchestrator = Orchestrator(target_url=target_url, cookies=dynamic_cookies)
+        
+        orchestrator = Orchestrator(scan_id=scan_id, target_url=target_url, cookies=dynamic_cookies)
         client = SafeHttpClient(cookies=dynamic_cookies, allow_local=True)
         
-        # Team will register active scanning plugins here
-        # orchestrator.register_scanner(SQLInjectionScanner(target_url, client))
-
-
-        # Register the SQL Injection Scanner engine into the orchestrator execution pipeline
-        orchestrator.register_scanner(SQLInjectionScanner(target_url, client))
-
+        # FIX: Pass the orchestrator's broadcast function to the Scanner plugin
+        scanner = SQLInjectionScanner(
+            target_url, 
+            client, 
+            log_callback=orchestrator.send_live_log # <-- هنا مررنا الدالة للاسكانر
+        )
+        orchestrator.register_scanner(scanner)
+        
         final_report_json = orchestrator.run_assessment()
         
         scan.status = 'Completed'
@@ -31,12 +48,27 @@ def run_scan_in_background(scan_id, target_url, dynamic_cookies):
         scan.overall_threat_level = final_report_json.get("executive_summary", {}).get("overall_threat_level", "Unknown")
         scan.full_report_json = final_report_json
         scan.save()
+        
+        # Final broadcast to notify the frontend that the process has concluded natively
+        orchestrator.send_live_log(f"[+] Scan {scan_id} Completed Successfully!")
         print(f"[+] Scan {scan_id} Completed Successfully!")
+        
     except Exception as e:
         scan = Scan.objects.get(id=scan_id)
         scan.status = 'Failed'
         scan.save()
-        print(f"[-] Scan {scan_id} Failed: {str(e)}")
+        
+        # Print the FULL error traceback to the terminal to catch the silent bug
+        print(f"[-] Scan {scan_id} Failed with exception:")
+        traceback.print_exc() 
+        
+        try:
+            orchestrator.send_live_log(f"[-] Fatal Scan Error: {str(e)}")
+        except:
+            pass
+    finally:
+        # Clean up the event loop safely
+        loop.close()
 
 class StartScanView(APIView):
     def post(self, request):
@@ -67,6 +99,7 @@ class StartScanView(APIView):
 
         scan = Scan.objects.create(target_url=target_url)
         
+        # Fire and forget mechanism: dispatch background thread for scanning logic
         thread = threading.Thread(target=run_scan_in_background, args=(scan.id, target_url, dynamic_cookies))
         thread.start()
 

@@ -7,12 +7,20 @@ from engine.payloads.payload_manager import PayloadManager
 
 class SQLInjectionScanner(BaseScanner):
     
+    # FIX: Added __init__ to accept the WebSocket log_callback
+    def __init__(self, target_url, client, log_callback=None):
+        self.target_url = target_url
+        self.client = client
+        self.log_callback = log_callback
+    
     def run_scan(self, endpoints: List[Endpoint]) -> List[Finding]:
         findings = []
         # Load centralized SQLi payload cases and mapping regex signatures
         sqli_cases = PayloadManager.get_payloads("sqli")
         
         print(f"  [SQLi Scanner] Assessing attack surface logic across {len(endpoints)} targets...")
+        if self.log_callback:
+            self.log_callback(f"⚔️ [SQLi Scanner] Assessing attack surface logic across {len(endpoints)} targets...")
 
         for ep in endpoints:
             # SQLi typically maps to input variables passed via parameters
@@ -37,7 +45,12 @@ class SQLInjectionScanner(BaseScanner):
                             match = re.search(regex_pattern, response.text)
                             
                             if match:
+                                # Local terminal print
                                 print(f"  [!] SQL Injection Confirmed! Target: {ep.url} | Param: '{param}'")
+                                
+                                # WebSocket Live Broadcast for a discovered Vulnerability!
+                                if self.log_callback:
+                                    self.log_callback(f"🔥 [VULN] SQL Injection Confirmed! Target: {ep.url} | Param: '{param}'")
                                 
                                 finding = Finding(
                                     title=f"SQL Injection Vulnerability in '{param}' parameter",

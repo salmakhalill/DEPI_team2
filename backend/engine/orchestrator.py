@@ -1,28 +1,79 @@
+import asyncio
 import concurrent.futures
 from datetime import datetime
 from typing import List, Dict, Any
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
 from engine.crawler.spider import PlaywrightSpider
 from engine.extractor.param_extractor import ParamExtractor
 from engine.models.finding import Finding
 
 class Orchestrator:
-    def __init__(self, target_url: str, cookies: dict = None):
+    def __init__(self, scan_id: str, target_url: str, cookies: dict = None):
+        # We need the scan_id to dynamically identify the correct WebSocket room
+        self.scan_id = str(scan_id)
         self.target_url = target_url
         self.cookies = cookies or {}
         self.start_time = datetime.utcnow()
         self.scanners = [] # Container array for active technical assessment extensions
+        
+        # Initialize the WebSocket channel layer and group name for live telemetry
+        self.channel_layer = get_channel_layer()
+        self.room_group_name = f'scan_{self.scan_id}'
+
+    def send_live_log(self, message_text: str):
+        """
+        Pushes a live log message securely to the WebSocket frontend.
+        Uses asyncio.run inside a detached micro-thread to completely 
+        bypass any Windows/Playwright Event Loop thread constraints.
+        """
+        import threading
+        import asyncio
+
+        def _broadcast():
+            try:
+                if self.channel_layer:
+                    # Directly run the async group_send without relying on async_to_sync
+                    asyncio.run(
+                        self.channel_layer.group_send(
+                            self.room_group_name,
+                            {
+                                'type': 'scan_telemetry',
+                                'message': message_text
+                            }
+                        )
+                    )
+            except Exception as e:
+                # Fallback for debugging if the channel layer fails
+                print(f"[WS Error] {e}")
+        
+        # Fire and forget micro-thread
+        threading.Thread(target=_broadcast).start()
 
     def register_scanner(self, scanner_instance):
         self.scanners.append(scanner_instance)
+        self.send_live_log(f"[+] Successfully registered scanner module: {scanner_instance.__class__.__name__}")
 
     def run_assessment(self) -> Dict[str, Any]:
-        print("[*] Phase 1: Discovery & Attack Surface Mapping")
-        spider = PlaywrightSpider(target_url=self.target_url, cookies=self.cookies)
+        self.send_live_log("[*] Phase 1: Discovery & Attack Surface Mapping Initialization")
+        
+        # FIX: Pass the WebSocket broadcast function directly to the Spider
+        spider = PlaywrightSpider(
+            target_url=self.target_url, 
+            cookies=self.cookies,
+            log_callback=self.send_live_log  # <-- ده السحر اللي هيخلي السبايدر ينطق لايف
+        )
+        
+        self.send_live_log(f"[*] Dispatching asynchronous spider to crawl: {self.target_url}")
+        
         raw_crawl_data = spider.crawl()
         
         endpoints = ParamExtractor.extract(raw_crawl_data)
+        self.send_live_log(f"[+] Attack Surface Extracted: {len(endpoints)} unique endpoints discovered.")
         print(f"[+] Attack Surface: {len(endpoints)} endpoints discovered.")
 
+        self.send_live_log("[*] Phase 2: Vulnerability Assessment (Concurrent Scans Initiated)")
         print("[*] Phase 2: Vulnerability Assessment (Concurrent Scans)")
         all_findings: List[Finding] = []
         
@@ -33,11 +84,20 @@ class Orchestrator:
                 for scanner in self.scanners
             }
             for future in concurrent.futures.as_completed(future_to_scanner):
-                findings = future.result()
-                if findings:
-                    all_findings.extend(findings)
+                scanner_name = future_to_scanner[future].__class__.__name__
+                try:
+                    findings = future.result()
+                    if findings:
+                        all_findings.extend(findings)
+                        self.send_live_log(f"[!] {scanner_name} completed and identified {len(findings)} vulnerable vectors.")
+                    else:
+                        self.send_live_log(f"[-] {scanner_name} completed cleanly. No vulnerabilities found.")
+                except Exception as exc:
+                    self.send_live_log(f"[!] Engine Error: {scanner_name} generated an exception: {exc}")
 
+        self.send_live_log("[*] Phase 3: Aggregating Threat Matrices and Generating Dynamic Payload")
         print("[*] Phase 3: Generating Dynamic Payload")
+        
         return self._build_master_json(all_findings)
 
     def _build_master_json(self, findings: List[Finding]) -> Dict[str, Any]:
@@ -102,10 +162,12 @@ class Orchestrator:
         elif distribution["high"] > 0: overall_threat = "High"
         elif distribution["medium"] > 0: overall_threat = "Medium"
 
+        self.send_live_log("[+] Scan Engine operations completed. Report payload is ready for compilation.")
+
         return {
             "report_metadata": {
                 "document_number": "T1-51.001",
-                "document_name": "NexusFlow SaaS Penetration Testing Report",
+                "document_name": "Automated Vulnerability Assessment Report",
                 "date_generated": self.start_time.strftime("%Y-%m-%d"),
                 "document_author": "Automated Scanner Engine",
                 "document_review": "Tech Lead"

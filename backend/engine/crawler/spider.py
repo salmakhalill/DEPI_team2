@@ -2,12 +2,14 @@ from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
 class PlaywrightSpider:
-    def __init__(self, target_url: str, cookies: dict = None):
+    # FIX: Added log_callback to the constructor to stream real-time logs
+    def __init__(self, target_url: str, cookies: dict = None, log_callback=None):
         self.target_url = target_url
         self.domain = urlparse(target_url).hostname 
         self.cookies = cookies or {}
         self.discovered_urls = set()
         self.discovered_forms = []
+        self.log_callback = log_callback
 
     def _format_cookies_for_playwright(self) -> list:
         formatted = []
@@ -53,7 +55,12 @@ class PlaywrightSpider:
             page.on("response", self._handle_response)
             
             try:
+                # Local terminal print
                 print(f"  [Spider] Injecting forced structural authentication mapping layer...")
+                # WebSocket Live Broadcast
+                if self.log_callback:
+                    self.log_callback("🕸️ [Spider] Injecting forced structural authentication mapping layer...")
+                
                 # Force browser context execution flow to settle down completely
                 page.goto(self.target_url, wait_until="networkidle", timeout=15000)
                 page.wait_for_timeout(2000) 
@@ -72,7 +79,12 @@ class PlaywrightSpider:
                     continue
                     
                 visited.add(normalized_url)
+                
+                # Local terminal print
                 print(f"  [Spider] Crawling: {current_url}")
+                # WebSocket Live Broadcast (The waterfall effect!)
+                if self.log_callback:
+                    self.log_callback(f"🕸️ [Spider] Crawling: {current_url}")
                 
                 try:
                     page.goto(current_url, wait_until="load", timeout=12000)
