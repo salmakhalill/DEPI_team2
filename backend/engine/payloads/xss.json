@@ -1,0 +1,35 @@
+{
+  "vulnerability": "Reflected XSS",
+  "cases": [
+    {
+      "id": "xss-script-01",
+      "payload": "<script>alert(1)</script>",
+      "match_regex": "<script>alert\\(1\\)</script>",
+      "description": "Basic script tag injection — executes immediately on page load."
+    },
+    {
+      "id": "xss-img-01",
+      "payload": "<img src=x onerror=alert(1)>",
+      "match_regex": "onerror\\s*=\\s*[\"']?alert\\(1\\)",
+      "description": "Image tag with onerror event handler injection."
+    },
+    {
+      "id": "xss-svg-01",
+      "payload": "<svg onload=alert(1)>",
+      "match_regex": "onload\\s*=\\s*[\"']?alert\\(1\\)",
+      "description": "SVG tag with onload event handler injection."
+    },
+    {
+      "id": "xss-attr-break-01",
+      "payload": "\"><script>alert(1)</script>",
+      "match_regex": "<script>alert\\(1\\)</script>",
+      "description": "Breaks out of an HTML attribute before injecting a script tag."
+    },
+    {
+      "id": "xss-quote-break-01",
+      "payload": "'><script>alert(1)</script>",
+      "match_regex": "<script>alert\\(1\\)</script>",
+      "description": "Breaks out of a single-quoted attribute before injecting a script tag."
+    }
+  ]
+}
