@@ -30,6 +30,12 @@
       "payload": "'><script>alert(1)</script>",
       "match_regex": "<script>alert\\(1\\)</script>",
       "description": "Breaks out of a single-quoted attribute before injecting a script tag."
+    },
+    {
+      "id": "xss-stored-comment-01",
+      "payload": "<script>alert('stored-xss')</script>",
+      "match_regex": "<script>alert\\('stored-xss'\\)</script>",
+      "description": "Payload submitted via comment form persists in the database and executes on every page load — Stored XSS."
     }
   ]
 }
