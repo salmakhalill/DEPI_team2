@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Messages — NexusFlow{% endblock %}
+{% block topbar_title %}Messages{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Messages</h1>
+      <p>Your inbox and sent messages.</p>
+    </div>
+    <a href="/messages/compose" class="btn btn-primary">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+      Compose
+    </a>
+  </div>
+
+  <div class="grid-main-side">
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <!-- Inbox -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div class="card-title">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Inbox
+            {% set unread_count = inbox | selectattr('is_read', 'equalto', False) | list | length %}
+            {% if unread_count > 0 %}
+            <span class="nav-badge" style="margin-left:6px;">{{ unread_count }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="msg-list">
+          {% for msg in inbox %}
+          <a href="/messages/{{ msg.id }}" class="msg-row {% if not msg.is_read %}unread{% endif %}">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--primary),#a855f7);width:36px;height:36px;font-size:0.85rem;flex-shrink:0;">
+              {{ msg.sender.full_name[0] if msg.sender and msg.sender.full_name else '?' }}
+            </div>
+            <div class="msg-info">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+                <span style="font-size:0.82rem;font-weight:{% if not msg.is_read %}700{% else %}500{% endif %};">{{ msg.sender.full_name if msg.sender else 'Unknown' }}</span>
+              </div>
+              <div class="msg-subject">{{ msg.subject or '(No subject)' }}</div>
+              <div class="msg-preview">{{ msg.body[:80] + '…' if msg.body and msg.body|length > 80 else msg.body }}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+              <div class="msg-time">{{ msg.created_at.strftime('%b %d') }}</div>
+              {% if not msg.is_read %}
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--primary);"></div>
+              {% endif %}
+            </div>
+          </a>
+          {% else %}
+          <div class="empty-state" style="padding:40px 20px;">
+            <p>Your inbox is empty.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Sent -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);">
+          <div class="card-title">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+            Sent
+          </div>
+        </div>
+        <div class="msg-list">
+          {% for msg in sent %}
+          <a href="/messages/{{ msg.id }}" class="msg-row">
+            <div class="avatar" style="background:linear-gradient(135deg,#00d4aa,#5b73ff);width:36px;height:36px;font-size:0.85rem;flex-shrink:0;">
+              {{ msg.recipient.full_name[0] if msg.recipient and msg.recipient.full_name else '?' }}
+            </div>
+            <div class="msg-info">
+              <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:2px;">To: {{ msg.recipient.full_name if msg.recipient else 'Unknown' }}</div>
+              <div class="msg-subject">{{ msg.subject or '(No subject)' }}</div>
+              <div class="msg-preview">{{ msg.body[:80] + '…' if msg.body and msg.body|length > 80 else msg.body }}</div>
+            </div>
+            <div class="msg-time">{{ msg.created_at.strftime('%b %d') }}</div>
+          </a>
+          {% else %}
+          <div class="empty-state" style="padding:40px 20px;">
+            <p>No sent messages.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px;">Compose</div>
+        <p style="font-size:0.82rem;margin-bottom:14px;">Send a message to any team member.</p>
+        <a href="/messages/compose" class="btn btn-primary w-full" style="justify-content:center;">
+          New Message
+        </a>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px;">Summary</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:0.82rem;">
+            <span style="color:var(--text-3);">Total received</span>
+            <span>{{ inbox|length }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.82rem;">
+            <span style="color:var(--text-3);">Unread</span>
+            <span style="color:var(--primary);">{{ inbox | selectattr('is_read', 'equalto', False) | list | length }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.82rem;">
+            <span style="color:var(--text-3);">Sent</span>
+            <span>{{ sent|length }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}New Message — NexusFlow{% endblock %}
+{% block topbar_title %}Messages{% endblock %}
+
+{% block content %}
+<div class="page" style="max-width:640px;">
+  <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--text-3);margin-bottom:20px;">
+    <a href="/messages" style="color:var(--text-3);">Messages</a>
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
+    <span style="color:var(--text-2);">New Message</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Compose Message</h1>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST" action="/messages/compose">
+    <div class="card">
+      <div class="form-group">
+        <label>To</label>
+        <select name="recipient_id" required>
+          <option value="">— Select recipient —</option>
+          {% for u in users %}
+          <option value="{{ u.id }}">{{ u.full_name }} (@{{ u.username }}) — {{ u.department or 'No dept' }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <input type="text" name="subject" placeholder="What's this about?" required/>
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea name="body" rows="8" placeholder="Write your message…" required></textarea>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <a href="/messages" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+          Send Message
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.title }} — NexusFlow{% endblock %}
+{% block topbar_title %}Documents{% endblock %}
+
+{% block content %}
+<div class="page">
+  <!-- Breadcrumb -->
+  <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--text-3);margin-bottom:20px;">
+    <a href="/documents" style="color:var(--text-3);">Documents</a>
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
+    <span style="color:var(--text-2);">{{ doc.title }}</span>
+  </div>
+
+  <div class="grid-main-side">
+    <!-- Main -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <!-- Doc header -->
+      <div class="card">
+        <div style="display:flex;align-items:flex-start;gap:16px;">
+          <div style="width:52px;height:52px;border-radius:12px;background:var(--primary-glow);display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:700;font-size:0.75rem;flex-shrink:0;">
+            {{ doc.filename.rsplit('.',1)[-1].upper() if doc.filename and '.' in doc.filename else 'FILE' }}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <h1 style="font-size:1.3rem;margin-bottom:6px;">{{ doc.title }}</h1>
+            <p style="font-size:0.88rem;margin-bottom:14px;">{{ doc.description or 'No description provided.' }}</p>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;">
+              {% if doc.is_private %}
+              <span class="badge badge-orange">🔒 Private</span>
+              {% else %}
+              <span class="badge badge-teal">🌐 Shared</span>
+              {% endif %}
+              <span class="badge badge-gray">{{ doc.file_type or 'Unknown type' }}</span>
+              <span style="font-size:0.78rem;color:var(--text-3);display:flex;align-items:center;gap:4px;">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                Added {{ doc.created_at.strftime('%B %d, %Y') }}
+              </span>
+              <span style="font-size:0.78rem;color:var(--text-3);">{{ doc.download_count }} downloads</span>
+            </div>
+          </div>
+        </div>
+        <div class="separator"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a href="/documents/{{ doc.id }}/download" class="btn btn-primary btn-sm">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </a>
+          <a href="/download?file={{ doc.filename }}" class="btn btn-secondary btn-sm" title="Open the raw file directly">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open Raw File
+          </a>
+          <a href="/documents/{{ doc.id }}/share" class="btn btn-secondary btn-sm">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </a>
+          <a href="/documents/{{ doc.id }}/edit" class="btn btn-secondary btn-sm">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit
+          </a>
+        </div>
+      </div>
+
+      <!-- File preview placeholder -->
+      <div class="card" style="min-height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,var(--surface),var(--surface) 10px,var(--surface-2) 10px,var(--surface-2) 20px);">
+        <svg width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" style="color:var(--text-3);margin-bottom:16px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+        <p style="font-size:0.9rem;font-weight:600;margin-bottom:6px;">{{ doc.filename or 'File not available' }}</p>
+        <p style="font-size:0.8rem;">Preview not available for this file type.</p>
+        <a href="/documents/{{ doc.id }}/download" class="btn btn-primary btn-sm" style="margin-top:16px;">Download to view</a>
+      </div>
+
+      <!-- Comments — VULN: Stored XSS (comment content rendered with |safe) -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Discussion ({{ comments|length }})
+          </div>
+        </div>
+
+        <div class="comment-thread" style="margin-bottom:20px;">
+          {% for comment in comments %}
+          <div class="comment">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--primary),#a855f7);flex-shrink:0;">
+              {{ comment.author.full_name[0] if comment.author and comment.author.full_name else '?' }}
+            </div>
+            <div class="comment-body">
+              <div class="comment-meta">
+                <a href="/profile/{{ comment.author_id }}" class="comment-author">
+                  {{ comment.author.full_name if comment.author else 'Unknown' }}
+                </a>
+                <span class="comment-time">{{ comment.created_at.strftime('%b %d at %H:%M') }}</span>
+              </div>
+              <!-- VULN: Stored XSS — rendered without escaping -->
+              <div class="comment-text">{{ comment.content | safe }}</div>
+            </div>
+          </div>
+          {% else %}
+          <div style="text-align:center;padding:24px;color:var(--text-3);font-size:0.85rem;">
+            No comments yet. Be the first to add one.
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="separator"></div>
+        <div style="margin-top:16px;">
+          <div style="font-size:0.88rem;font-weight:600;margin-bottom:12px;">Add a comment</div>
+          <form action="/documents/{{ doc.id }}/comment" method="POST">
+            <div class="form-group">
+              <textarea name="content" placeholder="Share your thoughts, feedback, or questions…" rows="3"></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button type="submit" class="btn btn-primary btn-sm">Post comment</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <!-- File details -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px;">File Details</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          {% for label, value in [
+            ('Filename', doc.filename or '—'),
+            ('File size', ('{:.1f} KB'.format(doc.file_size/1024)) if doc.file_size else '—'),
+            ('File type', doc.file_type or '—'),
+            ('Uploaded', doc.created_at.strftime('%b %d, %Y')),
+            ('Downloads', doc.download_count|string)
+          ] %}
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <span style="font-size:0.78rem;color:var(--text-3);flex-shrink:0;">{{ label }}</span>
+            <span style="font-size:0.78rem;text-align:right;word-break:break-all;">{{ value }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Owner -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px;">Uploaded by</div>
+        {% if doc.owner %}
+        <a href="/profile/{{ doc.owner_id }}" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;">
+          <div class="avatar" style="background:linear-gradient(135deg,var(--primary),#a855f7);">
+            {{ doc.owner.full_name[0] if doc.owner.full_name else '?' }}
+          </div>
+          <div>
+            <div style="font-size:0.88rem;font-weight:600;">{{ doc.owner.full_name }}</div>
+            <div style="font-size:0.75rem;color:var(--text-3);">@{{ doc.owner.username }}</div>
+          </div>
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Project -->
+      {% if doc.project %}
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px;">Project</div>
+        <a href="/projects/{{ doc.project_id }}" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;background:var(--primary-glow);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:0.88rem;font-weight:600;">{{ doc.project.name }}</div>
+            <div style="font-size:0.75rem;color:var(--text-3);">{{ doc.project.status | capitalize }}</div>
+          </div>
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

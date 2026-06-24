@@ -1,0 +1,6 @@
+STATUS REPORT TEMPLATE
+
+Summary:
+Progress:
+Blockers:
+Next Milestones:

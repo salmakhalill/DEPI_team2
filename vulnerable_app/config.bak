@@ -1,0 +1,33 @@
+# NexusFlow Configuration Backup
+# Generated: 2024-10-01T03:00:00Z
+# DO NOT COMMIT TO VERSION CONTROL
+
+[database]
+uri = sqlite:///instance/nexusflow.db
+backup_uri = postgresql://test_user:fake_password@localhost:5432/testdb
+backup_schedule = 0 3 * * *
+
+[security]
+secret_key = NexusFlow_dummy_secret_for_testing
+jwt_secret = dummy.jwt.token.for.testing
+session_lifetime = 86400
+
+[smtp]
+host = smtp.test.local
+port = 587
+username = test_user
+password = dummy_smtp_password
+
+[stripe]
+secret_key = dummy_stripe_secret_key
+webhook_secret = dummy_webhook_secret
+
+[admin]
+default_password = DummyAdminPassword123
+recovery_token = dummy_recovery_token
+
+[aws]
+access_key_id = AKIAEXAMPLEKEY
+secret_access_key = dummy_aws_secret_key
+region = us-east-1
+s3_bucket = nexusflow-test-bucket

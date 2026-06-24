@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Share {{ doc.title }} — NexusFlow{% endblock %}
+{% block topbar_title %}Documents{% endblock %}
+
+{% block content %}
+<div class="page" style="max-width:680px;">
+  <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--text-3);margin-bottom:20px;">
+    <a href="/documents" style="color:var(--text-3);">Documents</a>
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
+    <a href="/documents/{{ doc.id }}" style="color:var(--text-3);">{{ doc.title }}</a>
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
+    <span style="color:var(--text-2);">Share</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Share Document</h1>
+      <p>Give other team members access to "{{ doc.title }}".</p>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title" style="margin-bottom:16px;">Add Person</div>
+    <form method="POST" action="/documents/{{ doc.id }}/share">
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        <div class="form-group" style="margin-bottom:0;flex:1;min-width:200px;">
+          <label>Team member</label>
+          <select name="user_id" required>
+            <option value="">— Select person —</option>
+            {% for u in all_users %}
+            <option value="{{ u.id }}">{{ u.full_name }} (@{{ u.username }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;width:140px;">
+          <label>Permission</label>
+          <select name="permission">
+            <option value="view">Can view</option>
+            <option value="edit">Can edit</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Share</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">People with access ({{ existing_shares|length }})</div>
+    </div>
+    {% if existing_shares %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Person</th><th>Permission</th><th>Shared by</th><th>Date</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for share in existing_shares %}
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div class="avatar" style="width:26px;height:26px;font-size:0.65rem;background:linear-gradient(135deg,var(--primary),#a855f7);">
+                  {{ share.shared_with.full_name[0] if share.shared_with and share.shared_with.full_name else '?' }}
+                </div>
+                <span style="font-size:0.85rem;">{{ share.shared_with.full_name if share.shared_with else 'Unknown' }}</span>
+              </div>
+            </td>
+            <td><span class="badge badge-{{ 'blue' if share.permission == 'view' else 'orange' }}">{{ share.permission | capitalize }}</span></td>
+            <td style="font-size:0.82rem;color:var(--text-2);">{{ share.shared_by.full_name if share.shared_by else 'Unknown' }}</td>
+            <td style="font-size:0.78rem;color:var(--text-3);">{{ share.created_at.strftime('%b %d, %Y') }}</td>
+            <td>
+              <form method="POST" action="/documents/{{ doc.id }}/share/{{ share.id }}/revoke">
+                <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--danger);">Revoke</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:24px 0;">
+      <p>This document hasn't been shared with anyone yet.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

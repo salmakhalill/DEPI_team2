@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Documents — NexusFlow{% endblock %}
+{% block topbar_title %}Documents{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Documents</h1>
+      <p>{{ documents|length }} document{{ 's' if documents|length != 1 }} in your workspace</p>
+    </div>
+    <a href="/documents/upload" class="btn btn-primary">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Upload Document
+    </a>
+  </div>
+
+  <!-- Filter bar -->
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <button class="btn btn-secondary btn-sm" style="border-color:var(--primary);color:var(--primary);">All</button>
+    <button class="btn btn-ghost btn-sm">Shared</button>
+    <button class="btn btn-ghost btn-sm">Private</button>
+    <button class="btn btn-ghost btn-sm">PDF</button>
+    <button class="btn btn-ghost btn-sm">Presentations</button>
+    <button class="btn btn-ghost btn-sm">Spreadsheets</button>
+    <div style="margin-left:auto;">
+      <button class="btn btn-ghost btn-sm">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        List view
+      </button>
+    </div>
+  </div>
+
+  <div class="doc-grid">
+    {% for doc in documents %}
+    <a href="/documents/{{ doc.id }}" class="doc-card">
+      <div class="doc-icon" style="background:{% if 'pdf' in (doc.file_type or '') %}var(--danger-dim){% elif 'sheet' in (doc.file_type or '') or 'excel' in (doc.filename or '') %}var(--success-dim){% elif 'presentation' in (doc.file_type or '') or 'ppt' in (doc.filename or '') %}var(--warning-dim){% else %}var(--primary-glow){% endif %};color:{% if 'pdf' in (doc.file_type or '') %}var(--danger){% elif 'sheet' in (doc.file_type or '') %}var(--success){% elif 'presentation' in (doc.file_type or '') or 'ppt' in (doc.filename or '') %}var(--warning){% else %}var(--primary){% endif %};">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      </div>
+      <div class="doc-name">{{ doc.title }}</div>
+      <div style="font-size:0.78rem;color:var(--text-2);line-height:1.5;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+        {{ doc.description or 'No description provided.' }}
+      </div>
+      <div class="doc-meta" style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="background:var(--surface-3);padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;color:var(--text-3);">
+            {{ doc.filename.rsplit('.',1)[-1].upper() if doc.filename and '.' in doc.filename else 'FILE' }}
+          </span>
+          {% if doc.is_private %}
+          <span class="badge badge-orange" style="font-size:0.65rem;padding:2px 6px;">Private</span>
+          {% endif %}
+        </div>
+        <span style="font-size:0.72rem;color:var(--text-3);">{{ doc.download_count }} downloads</span>
+      </div>
+      <div style="margin-top:10px;">
+        <a href="/download?file={{ doc.filename }}" onclick="event.stopPropagation();" style="font-size:0.72rem;color:var(--text-3);text-decoration:underline;">Open raw file →</a>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if not documents %}
+  <div class="empty-state card">
+    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+    <h3>No documents yet</h3>
+    <p>Upload your first document to get started.</p>
+    <a href="/documents/upload" class="btn btn-primary" style="margin-top:16px;">Upload Document</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
