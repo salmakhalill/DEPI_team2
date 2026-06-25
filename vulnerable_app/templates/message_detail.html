@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ msg.subject or 'Message' }} — NexusFlow{% endblock %}
+{% block topbar_title %}Messages{% endblock %}
+
+{% block content %}
+<div class="page" style="max-width:720px;">
+  <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--text-3);margin-bottom:20px;">
+    <a href="/messages" style="color:var(--text-3);">Messages</a>
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
+    <span style="color:var(--text-2);">{{ msg.subject or '(No subject)' }}</span>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <h2 style="margin-bottom:10px;">{{ msg.subject or '(No subject)' }}</h2>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="avatar" style="width:28px;height:28px;font-size:0.72rem;background:linear-gradient(135deg,var(--primary),#a855f7);">
+              {{ msg.sender.full_name[0] if msg.sender and msg.sender.full_name else '?' }}
+            </div>
+            <div>
+              <span style="font-size:0.82rem;font-weight:600;">{{ msg.sender.full_name if msg.sender else 'Unknown' }}</span>
+              <span style="font-size:0.78rem;color:var(--text-3);margin-left:6px;">→</span>
+              <span style="font-size:0.82rem;color:var(--text-2);margin-left:6px;">{{ msg.recipient.full_name if msg.recipient else 'Unknown' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span style="font-size:0.78rem;color:var(--text-3);">{{ msg.created_at.strftime('%B %d, %Y at %H:%M') }}</span>
+    </div>
+
+    <div class="separator"></div>
+    <div style="padding:20px 0;font-size:0.9rem;color:var(--text-2);line-height:1.8;white-space:pre-wrap;">{{ msg.body }}</div>
+    <div class="separator"></div>
+
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <a href="/messages/compose" class="btn btn-primary btn-sm">Reply</a>
+      <a href="/messages" class="btn btn-secondary btn-sm">← Back to inbox</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

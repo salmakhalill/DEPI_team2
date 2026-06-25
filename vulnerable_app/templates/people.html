@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}People — NexusFlow{% endblock %}
+{% block topbar_title %}People{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>People</h1>
+      <p>Browse team members across your organization.</p>
+    </div>
+  </div>
+
+  <!-- Filter bar — VULN: department param used in raw SQL -->
+  <div class="card" style="margin-bottom:20px;">
+    <form action="/people" method="get" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="form-group" style="margin-bottom:0;flex:1;min-width:180px;">
+        <label>Filter by Department</label>
+        <select name="department" onchange="this.form.submit()">
+          <option value="">All departments</option>
+          {% for dept in departments %}
+          <option value="{{ dept }}" {% if dept_filter == dept %}selected{% endif %}>{{ dept }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-secondary">Apply</button>
+      {% if dept_filter %}
+      <a href="/people" class="btn btn-ghost">Clear filter</a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if dept_filter %}
+  <div class="alert alert-info" style="margin-bottom:16px;">
+    Showing members in: <strong>{{ dept_filter }}</strong> &nbsp;·&nbsp; {{ members|length }} result{{ 's' if members|length != 1 }}
+  </div>
+  {% endif %}
+
+  {% if db_error %}
+  <div class="card" style="margin-bottom:20px;border-color:rgba(255,71,87,.3);">
+    <div class="card-title" style="color:var(--danger);margin-bottom:10px;">Database Query Error</div>
+    <div style="font-size:0.82rem;display:flex;flex-direction:column;gap:6px;">
+      <div><strong>Error type:</strong> <span class="mono">{{ db_error.type }}</span></div>
+      <div><strong>Message:</strong> <span class="mono">{{ db_error.message }}</span></div>
+      <div><strong>Query executed:</strong></div>
+      <pre style="background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-family:var(--font-mono);font-size:0.75rem;color:var(--text-3);overflow-x:auto;">{{ db_error.query }}</pre>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="people-grid">
+    {% for member in members %}
+    <a href="/profile/{{ member['id'] }}" class="person-card">
+      <div class="avatar lg" style="background:linear-gradient({% if loop.index % 4 == 0 %}135deg,#5b73ff,#a855f7{% elif loop.index % 3 == 0 %}135deg,#00d4aa,#5b73ff{% elif loop.index % 2 == 0 %}135deg,#ffa726,#ff4757{% else %}135deg,#a855f7,#00d4aa{% endif %});">
+        {{ member['full_name'][0] if member['full_name'] else '?' }}
+      </div>
+      <div class="person-name">{{ member['full_name'] or member['username'] }}</div>
+      <div class="person-dept">{{ member['department'] or 'No department' }}</div>
+      <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;">
+        <span class="badge badge-{{ 'purple' if member['role'] == 'admin' else 'blue' }}">{{ member['role'] | capitalize }}</span>
+        <span class="badge badge-{{ 'teal' if member['is_active'] else 'red' }}">{{ 'Active' if member['is_active'] else 'Inactive' }}</span>
+      </div>
+    </a>
+    {% else %}
+    <div class="empty-state card" style="grid-column:1/-1;">
+      <h3>No team members found</h3>
+      <p>No results for the selected filter.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

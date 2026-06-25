@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Internal Server Error — NexusFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/app.css"/>
+</head>
+<body style="padding:40px;">
+  <div style="max-width:880px;margin:0 auto;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--danger-dim);display:flex;align-items:center;justify-content:center;color:var(--danger);">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div>
+        <h2 style="margin-bottom:2px;">500 Internal Server Error</h2>
+        <p style="font-size:0.85rem;">The application encountered an unexpected error while processing your request.</p>
+      </div>
+    </div>
+
+    <!-- VULN: Verbose error disclosure — exposes exception type, message,
+         full traceback, server filesystem path, and DB connection string -->
+    <div class="card" style="margin-bottom:16px;border-color:rgba(255,71,87,.3);">
+      <div class="card-title" style="color:var(--danger);margin-bottom:12px;">Exception Details</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:0.85rem;">
+        <div><strong>Type:</strong> <span class="mono">{{ error_type }}</span></div>
+        <div><strong>Message:</strong> <span class="mono">{{ error_message }}</span></div>
+        <div><strong>Application root:</strong> <span class="mono">{{ app_root }}</span></div>
+        <div><strong>Database URI:</strong> <span class="mono">{{ db_uri }}</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px;">Traceback (most recent call last)</div>
+      <pre style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-family:var(--font-mono);font-size:0.78rem;color:var(--text-2);white-space:pre-wrap;overflow-x:auto;max-height:420px;overflow-y:auto;">{{ traceback_text }}</pre>
+    </div>
+
+    <div style="margin-top:24px;">
+      <a href="/dashboard" class="btn btn-primary">Return to Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>

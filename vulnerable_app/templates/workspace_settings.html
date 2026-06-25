@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Workspace Settings — NexusFlow{% endblock %}
+{% block topbar_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="page" style="max-width:680px;">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Workspace Settings</h1>
+      <p>Manage organization-wide configuration for NexusFlow.</p>
+    </div>
+    {% if user.role == 'admin' %}
+    <span class="admin-badge">Administrator</span>
+    {% else %}
+    <span class="badge badge-blue">Member</span>
+    {% endif %}
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST" action="/admin/settings">
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title" style="margin-bottom:16px;">General</div>
+      <div class="form-group">
+        <label>Workspace name</label>
+        <input type="text" value="NexusFlow Production" />
+      </div>
+      <div class="form-group">
+        <label>Default member role</label>
+        <select>
+          <option>Member</option>
+          <option>Viewer</option>
+          <option>Admin</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="checkbox-label">
+          <input type="checkbox" checked/> Allow self-service registration
+        </label>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title" style="margin-bottom:16px;">Security</div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox"/> Require SSO for all members
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox"/> Enforce password complexity rules
+        </label>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="checkbox-label">
+          <input type="checkbox"/> Enable audit log export
+        </label>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;">
+      <button type="submit" class="btn btn-primary">Save Settings</button>
+    </div>
+  </form>
+
+  <div class="card" style="margin-top:20px;">
+    <div class="card-title" style="margin-bottom:10px;">Export Data</div>
+    <p style="font-size:0.85rem;margin-bottom:14px;">Download a CSV export of all workspace users.</p>
+    <a href="/admin/users/export" class="btn btn-secondary btn-sm">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export Users CSV
+    </a>
+  </div>
+</div>
+{% endblock %}

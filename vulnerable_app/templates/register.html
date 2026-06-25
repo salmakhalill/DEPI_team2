@@ -1,21 +1,81 @@
-{% extends "base.html" %}
-{% block title %}Register - VulnShop{% endblock %}
-{% block content %}
-    <h1>Register</h1>
-    <form method="POST" action="{{ url_for('register') }}" class="form">
-        <label>Username</label>
-        <input type="text" name="username" required>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Create Account — NexusFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/app.css"/>
+</head>
+<body>
+<div class="auth-shell">
+  <div class="auth-left">
+    <div class="sidebar-logo" style="margin-bottom:auto;">
+      <div class="logo-mark">NF</div>
+      <span class="logo-text">NexusFlow</span>
+    </div>
+    <div class="auth-left-content">
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        {% for stat, label in [('12,000+', 'Teams worldwide'), ('50M+', 'Documents managed'), ('99.9%', 'Uptime SLA'), ('4.9★', 'Average rating')] %}
+        <div>
+          <div style="font-size:2rem;font-weight:800;letter-spacing:-0.04em;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">{{ stat }}</div>
+          <div style="font-size:0.82rem;color:var(--text-3);margin-top:2px;">{{ label }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
 
-        <label>Password</label>
-        <input type="password" name="password" required>
+  <div class="auth-right">
+    <div class="auth-form-wrap">
+      <a href="/" style="display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--text-3);margin-bottom:32px;text-decoration:none;">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>
+        Back to home
+      </a>
+      <h2>Create your account</h2>
+      <p>Start your 14-day free trial. No credit card required.</p>
 
-        <label>Email</label>
-        <input type="email" name="email">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
 
-        <label>Bio</label>
-        <textarea name="bio" rows="3"></textarea>
+      <form method="POST" action="/register" style="margin-top:24px;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full name</label>
+            <input type="text" name="full_name" placeholder="Jane Smith" required/>
+          </div>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" placeholder="jane.smith" required/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Work email</label>
+          <input type="email" name="email" placeholder="jane@company.com" required/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" placeholder="Min. 8 characters" required/>
+          <div class="form-hint">Use at least 8 characters with a mix of letters and numbers.</div>
+        </div>
+        <div style="margin-bottom:20px;">
+          <label class="checkbox-label">
+            <input type="checkbox" required/>
+            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary w-full" style="justify-content:center;">Create account</button>
+      </form>
 
-        <button type="submit">Create account</button>
-    </form>
-    <p>Already have an account? <a href="{{ url_for('login') }}">Log in</a>.</p>
-{% endblock %}
+      <p style="text-align:center;font-size:0.85rem;color:var(--text-3);margin-top:20px;">
+        Already have an account? <a href="/login">Sign in</a>
+      </p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

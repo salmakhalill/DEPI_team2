@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Template Preview — NexusFlow{% endblock %}
+{% block topbar_title %}Documents{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Template Preview</h1>
+      <p>Preview a starter template before creating a new document from it.</p>
+    </div>
+    <a href="/documents/upload" class="btn btn-primary">Use this template</a>
+  </div>
+
+  <div class="grid-main-side">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+          {{ template_name }}
+        </div>
+      </div>
+
+      {% if error %}
+      <div class="alert alert-error">{{ error }}</div>
+      {% endif %}
+
+      {% if content %}
+      <pre style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;font-family:var(--font-mono);font-size:0.82rem;color:var(--text-2);white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto;">{{ content }}</pre>
+      {% endif %}
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px;">Available Templates</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          {% for t in available_templates %}
+          <a href="/preview?template={{ t }}" style="text-decoration:none;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;font-size:0.82rem;color:{% if t == template_name %}var(--primary){% else %}var(--text-2){% endif %};background:{% if t == template_name %}var(--primary-glow){% else %}transparent{% endif %};">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+            {{ t }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px;">About templates</div>
+        <p style="font-size:0.8rem;">Starter templates help your team create consistent documents. Pick one to see a quick preview before using it.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

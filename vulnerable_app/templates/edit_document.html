@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ doc.title }} — NexusFlow{% endblock %}
+{% block topbar_title %}Documents{% endblock %}
+
+{% block content %}
+<div class="page" style="max-width:640px;">
+  <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--text-3);margin-bottom:20px;">
+    <a href="/documents" style="color:var(--text-3);">Documents</a>
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
+    <a href="/documents/{{ doc.id }}" style="color:var(--text-3);">{{ doc.title }}</a>
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
+    <span style="color:var(--text-2);">Edit</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Edit Document</h1>
+      <p>Update metadata for this document.</p>
+    </div>
+  </div>
+
+  {% if doc.owner_id != user.id %}
+  <div class="alert alert-warning">
+    You are not the original owner of this document, but workspace members can edit shared metadata.
+  </div>
+  {% endif %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST" action="/documents/{{ doc.id }}/edit">
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title" style="margin-bottom:16px;">Document Details</div>
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" name="title" value="{{ doc.title }}" required/>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" rows="4">{{ doc.description or '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Project</label>
+        <select name="project_id">
+          <option value="">— No project —</option>
+          {% for project in projects %}
+          <option value="{{ project.id }}" {% if doc.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="checkbox-label">
+          <input type="checkbox" name="is_private" {% if doc.is_private %}checked{% endif %}/>
+          Private document
+        </label>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end;">
+      <a href="/documents/{{ doc.id }}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">Save Changes</button>
+    </div>
+  </form>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title" style="margin-bottom:10px;">File Reference</div>
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:0.82rem;">
+      <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3);">Filename</span><span class="mono">{{ doc.filename }}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3);">Owner ID</span><span class="mono">#{{ doc.owner_id }}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3);">Document ID</span><span class="mono">#{{ doc.id }}</span></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

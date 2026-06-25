@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — NexusFlow{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Good {{ 'morning' if now is not defined else '' }}, {{ user.full_name.split()[0] }} 👋</h1>
+      <p>Here's what's happening across your workspace today.</p>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <a href="/documents/upload" class="btn btn-primary">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Upload Document
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card blue">
+      <div class="stat-icon blue">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+      </div>
+      <div class="stat-value">{{ total_docs }}</div>
+      <div class="stat-label">Total Documents</div>
+      <div class="stat-delta up">↑ 12% this month</div>
+    </div>
+    <div class="stat-card teal">
+      <div class="stat-icon teal">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <div class="stat-value">{{ total_projects }}</div>
+      <div class="stat-label">Active Projects</div>
+      <div class="stat-delta up">↑ 3 new this week</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-icon purple">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </div>
+      <div class="stat-value">{{ total_users }}</div>
+      <div class="stat-label">Team Members</div>
+      <div class="stat-delta up">↑ 1 joined recently</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-icon orange">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <div class="stat-value">{{ unread_msgs }}</div>
+      <div class="stat-label">Unread Messages</div>
+      <div class="stat-delta {% if unread_msgs > 0 %}down{% else %}up{% endif %}">
+        {% if unread_msgs > 0 %}{{ unread_msgs }} need attention{% else %}All caught up{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-main-side">
+    <!-- Main column -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Recent Documents -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+            Recent Documents
+          </div>
+          <a href="/documents" class="btn btn-ghost btn-sm">View all →</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Downloads</th>
+                <th>Visibility</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in documents %}
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;background:var(--primary-glow);border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:0.62rem;font-weight:700;flex-shrink:0;">
+                      {{ doc.filename.rsplit('.',1)[-1].upper() if doc.filename else 'FILE' }}
+                    </div>
+                    <div>
+                      <div style="font-size:0.85rem;font-weight:600;">{{ doc.title }}</div>
+                      <div style="font-size:0.72rem;color:var(--text-3);">{{ doc.created_at.strftime('%b %d, %Y') }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="tag">{{ doc.file_type.split('/')[-1] if doc.file_type else 'unknown' }}</span></td>
+                <td style="color:var(--text-2);font-size:0.85rem;">{{ doc.download_count }}</td>
+                <td>
+                  {% if doc.is_private %}
+                    <span class="badge badge-orange">Private</span>
+                  {% else %}
+                    <span class="badge badge-teal">Shared</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="/documents/{{ doc.id }}" class="btn btn-ghost btn-sm">Open</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Projects -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            Active Projects
+          </div>
+          <a href="/projects" class="btn btn-ghost btn-sm">View all →</a>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          {% for project in projects %}
+          <a href="/projects/{{ project.id }}" style="text-decoration:none;color:inherit;">
+            <div style="display:flex;align-items:center;gap:14px;padding:12px;border-radius:var(--radius);border:1px solid var(--border);transition:border-color .15s;" onmouseover="this.style.borderColor='var(--border-light)'" onmouseout="this.style.borderColor='var(--border)'">
+              <div style="width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:
+                {% if project.priority == 'critical' %}var(--danger-dim){% elif project.priority == 'high' %}var(--warning-dim){% else %}var(--primary-glow){% endif %};
+                color:{% if project.priority == 'critical' %}var(--danger){% elif project.priority == 'high' %}var(--warning){% else %}var(--primary){% endif %};
+                flex-shrink:0;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:0.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ project.name }}</div>
+                <div style="font-size:0.75rem;color:var(--text-3);">Due {{ project.deadline or 'No deadline' }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="badge badge-{{ 'red' if project.priority == 'critical' else 'orange' if project.priority == 'high' else 'blue' if project.priority == 'medium' else 'gray' }}">
+                  {{ project.priority | capitalize }}
+                </span>
+                <span class="badge badge-{{ 'teal' if project.status == 'active' else 'green' if project.status == 'completed' else 'gray' }}">
+                  {{ project.status | capitalize }}
+                </span>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Side column -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <!-- Quick actions -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px;">Quick Actions</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <a href="/documents/upload" class="btn btn-secondary w-full" style="justify-content:flex-start;gap:10px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Document
+          </a>
+          <a href="/messages/compose" class="btn btn-secondary w-full" style="justify-content:flex-start;gap:10px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+            Send Message
+          </a>
+          <a href="/people" class="btn btn-secondary w-full" style="justify-content:flex-start;gap:10px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Browse Team
+          </a>
+          <a href="/search" class="btn btn-secondary w-full" style="justify-content:flex-start;gap:10px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Search Everything
+          </a>
+        </div>
+      </div>
+
+      <!-- API access -->
+      <div class="card" style="border-color:rgba(91,115,255,.2);">
+        <div class="card-title" style="margin-bottom:10px;">
+          <svg width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><polyline points="16,18 22,12 16,6"/><polyline points="8,6 2,12 8,18"/></svg>
+          API Access
+        </div>
+        <p style="font-size:0.8rem;margin-bottom:12px;">Your personal API key for integrations.</p>
+        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-family:var(--font-mono);font-size:0.72rem;color:var(--text-3);word-break:break-all;">
+          {{ user.api_key or 'No key generated' }}
+        </div>
+        <a href="/api/v1/user/me" class="btn btn-ghost btn-sm" style="margin-top:10px;font-size:0.75rem;">View API profile →</a>
+      </div>
+
+      <!-- Profile snippet -->
+      <div class="card">
+        <div style="text-align:center;padding:8px 0 16px;">
+          <div class="avatar lg" style="margin:0 auto 12px;background:linear-gradient(135deg,var(--primary),#a855f7);">
+            {{ user.full_name[0] if user.full_name else 'U' }}
+          </div>
+          <div style="font-weight:700;font-size:1rem;">{{ user.full_name }}</div>
+          <div style="font-size:0.78rem;color:var(--text-3);margin-top:2px;">@{{ user.username }}</div>
+          <div style="font-size:0.78rem;color:var(--text-3);">{{ user.department or 'No department' }}</div>
+        </div>
+        <div class="separator"></div>
+        <a href="/profile/{{ user.id }}" class="btn btn-secondary w-full btn-sm" style="justify-content:center;">View Profile</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,33 +1,144 @@
 {% extends "base.html" %}
-{% block title %}Profile - VulnShop{% endblock %}
+{% block title %}{{ target_user.full_name }} — NexusFlow{% endblock %}
+{% block topbar_title %}People{% endblock %}
+
 {% block content %}
-    <h1>{{ user['username'] }}'s profile</h1>
-    {% if is_own %}
-        <p class="note">This is your own profile.</p>
-    {% else %}
-        <p class="note">You are viewing another user's profile (try changing the URL's ID).</p>
-    {% endif %}
+<div class="page">
+  <!-- Profile card -->
+  <div class="card" style="margin-bottom:20px;padding:0;overflow:hidden;">
+    <div class="profile-cover">
+      <div class="profile-cover-accent"></div>
+    </div>
+    <div class="profile-info">
+      <div class="avatar xl" style="background:linear-gradient(135deg,var(--primary),#a855f7);border:4px solid var(--surface);">
+        {{ target_user.full_name[0] if target_user.full_name else '?' }}
+      </div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-top:8px;">
+        <div>
+          <div class="profile-name">{{ target_user.full_name }}</div>
+          <div class="profile-username">@{{ target_user.username }}
+            {% if target_user.role == 'admin' %}
+            &nbsp;<span class="badge badge-purple">Admin</span>
+            {% endif %}
+          </div>
+          {% if target_user.bio %}
+          <div class="profile-bio">{{ target_user.bio }}</div>
+          {% endif %}
+          <div class="profile-meta">
+            {% if target_user.department %}
+            <div class="profile-meta-item">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+              {{ target_user.department }}
+            </div>
+            {% endif %}
+            <div class="profile-meta-item">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              {{ target_user.email }}
+            </div>
+            <div class="profile-meta-item">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+              Joined {{ target_user.created_at.strftime('%B %Y') }}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          {% if user.id == target_user.id %}
+          <a href="/profile/edit" class="btn btn-secondary btn-sm">Edit Profile</a>
+          {% else %}
+          <a href="/messages/compose" class="btn btn-primary btn-sm">Send Message</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <table class="profile-table">
-        <tr><th>User ID</th><td>{{ user['id'] }}</td></tr>
-        <tr><th>Username</th><td>{{ user['username'] }}</td></tr>
-        <tr><th>Email</th><td>{{ user['email'] }}</td></tr>
-        <tr><th>Password</th><td>{{ user['password'] }}</td></tr>
-        <tr><th>Admin?</th><td>{{ 'Yes' if user['is_admin'] else 'No' }}</td></tr>
-        <tr><th>Bio</th><td>{{ user['bio'] }}</td></tr>
-    </table>
+  <div class="grid-main-side">
+    <div>
+      <!-- Documents -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Documents ({{ documents|length }})</div>
+        </div>
+        {% if documents %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Downloads</th>
+                <th>Visibility</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in documents %}
+              <tr>
+                <td>
+                  <div style="font-weight:600;font-size:0.85rem;">{{ doc.title }}</div>
+                  <div style="font-size:0.72rem;color:var(--text-3);">{{ doc.created_at.strftime('%b %d, %Y') }}</div>
+                </td>
+                <td><span class="tag">{{ doc.filename.rsplit('.',1)[-1].upper() if doc.filename and '.' in doc.filename else 'FILE' }}</span></td>
+                <td style="font-size:0.85rem;color:var(--text-2);">{{ doc.download_count }}</td>
+                <td>
+                  <span class="badge badge-{{ 'orange' if doc.is_private else 'teal' }}">{{ 'Private' if doc.is_private else 'Shared' }}</span>
+                </td>
+                <td><a href="/documents/{{ doc.id }}" class="btn btn-ghost btn-sm">Open</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:24px 0;">
+          <p>No documents uploaded yet.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
 
-    <h2>Uploaded files</h2>
-    {% if files %}
-        <ul>
-        {% for f in files %}
-            <li><a href="{{ url_for('serve_upload', filename=f['filename']) }}">{{ f['original_name'] }}</a></li>
-        {% endfor %}
-        </ul>
-    {% else %}
-        <p>No files uploaded.</p>
-    {% endif %}
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <!-- Account info — VULN: IDOR exposes api_key and sensitive fields -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px;">Account Information</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em;">User ID</div>
+            <div class="mono">#{{ target_user.id }}</div>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em;">Role</div>
+            <span class="badge badge-{{ 'purple' if target_user.role == 'admin' else 'blue' }}">{{ target_user.role | capitalize }}</span>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em;">Status</div>
+            <span class="badge badge-{{ 'teal' if target_user.is_active else 'red' }}">{{ 'Active' if target_user.is_active else 'Suspended' }}</span>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em;">API Key</div>
+            <!-- VULN: IDOR — any authenticated user can view any user's API key -->
+            <div style="background:var(--surface-2);border-radius:6px;padding:8px 10px;font-family:var(--font-mono);font-size:0.68rem;color:var(--text-3);word-break:break-all;">
+              {{ target_user.api_key or '— not set —' }}
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <p><a href="{{ url_for('profile', user_id=user['id'] - 1) }}">&larr; Previous profile ID</a> |
-       <a href="{{ url_for('profile', user_id=user['id'] + 1) }}">Next profile ID &rarr;</a></p>
+      <!-- Stats -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px;">Activity</div>
+        <div style="display:flex;justify-content:space-around;text-align:center;">
+          <div>
+            <div style="font-size:1.4rem;font-weight:700;">{{ documents|length }}</div>
+            <div style="font-size:0.72rem;color:var(--text-3);">Documents</div>
+          </div>
+          <div>
+            <div style="font-size:1.4rem;font-weight:700;">{{ target_user.comments|length }}</div>
+            <div style="font-size:0.72rem;color:var(--text-3);">Comments</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

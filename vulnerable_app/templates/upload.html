@@ -1,31 +1,148 @@
 {% extends "base.html" %}
-{% block title %}Upload - VulnShop{% endblock %}
-{% block content %}
-    <h1>Upload a file</h1>
-    <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data" class="form">
-        <label>Choose file</label>
-        <input type="file" name="file" required>
-        <button type="submit">Upload</button>
-    </form>
-    <p class="note">No file type or size restrictions are enforced (by design, for this demo).</p>
+{% block title %}Upload Document — NexusFlow{% endblock %}
+{% block topbar_title %}Upload{% endblock %}
 
-    <h2>All uploaded files</h2>
-    {% if files %}
-        <table class="results-table">
-            <tr><th>Uploaded by</th><th>File</th><th>When</th><th>Links</th></tr>
-            {% for f in files %}
-            <tr>
-                <td>{{ f['username'] }}</td>
-                <td>{{ f['original_name'] }}</td>
-                <td>{{ f['uploaded_at'] }}</td>
-                <td>
-                    <a href="{{ url_for('serve_upload', filename=f['filename']) }}">view</a> |
-                    <a href="{{ url_for('download', filename=f['filename']) }}">download</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-    {% else %}
-        <p>No files uploaded yet.</p>
-    {% endif %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Upload Document</h1>
+      <p>Add a file to your workspace. Supported: PDF, Word, Excel, PowerPoint, images, and more.</p>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="grid-main-side">
+    <div>
+      <form method="POST" action="/documents/upload" enctype="multipart/form-data">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title" style="margin-bottom:16px;">File</div>
+
+          <div class="upload-zone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+            <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--text-3);margin:0 auto 12px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div style="font-size:0.95rem;font-weight:600;color:var(--text);">Drop files here or click to browse</div>
+            <p>PDF, DOCX, XLSX, PPTX, PNG, JPG — up to 16 MB</p>
+            <input type="file" id="fileInput" name="file" style="display:none;" onchange="handleFileSelect(this)"/>
+          </div>
+          <div id="fileInfo" style="display:none;margin-top:12px;padding:12px;background:var(--surface-2);border-radius:var(--radius);display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;background:var(--primary-glow);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+            </div>
+            <div>
+              <div id="fileName" style="font-size:0.85rem;font-weight:600;"></div>
+              <div id="fileSize" style="font-size:0.75rem;color:var(--text-3);"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title" style="margin-bottom:16px;">Document Details</div>
+          <div class="form-group">
+            <label>Title <span style="color:var(--danger);">*</span></label>
+            <input type="text" name="title" placeholder="e.g. Q4 Marketing Strategy" required/>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea name="description" placeholder="Briefly describe what this document contains…" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Project (optional)</label>
+            <select name="project_id">
+              <option value="">— No project —</option>
+              {% for project in projects %}
+              <option value="{{ project.id }}">{{ project.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="checkbox-label">
+              <input type="checkbox" name="is_private"/>
+              Make this document private (only visible to admins and you)
+            </label>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:flex-end;">
+          <a href="/documents" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Document
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px;">Accepted file types</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          {% for label, types, color in [
+            ('Documents', 'PDF, DOC, DOCX, TXT', 'danger'),
+            ('Spreadsheets', 'XLS, XLSX, CSV', 'success'),
+            ('Presentations', 'PPT, PPTX', 'warning'),
+            ('Images', 'PNG, JPG, JPEG, GIF', 'blue'),
+            ('Archives', 'ZIP', 'purple')
+          ] %}
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--{{ color }});flex-shrink:0;"></div>
+            <div>
+              <div style="font-size:0.82rem;font-weight:600;">{{ label }}</div>
+              <div style="font-size:0.72rem;color:var(--text-3);">{{ types }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card" style="border-color:rgba(255,167,38,.2);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <svg width="14" height="14" fill="none" stroke="var(--warning)" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div style="font-size:0.82rem;font-weight:600;color:var(--warning);">Storage limit</div>
+        </div>
+        <p style="font-size:0.78rem;">Your plan allows up to 10 GB of storage. Maximum file size: 16 MB.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px;">Starting fresh?</div>
+        <p style="font-size:0.78rem;margin-bottom:12px;">Browse starter templates for common document types.</p>
+        <a href="/preview?template=project-brief.txt" class="btn btn-secondary btn-sm w-full" style="justify-content:center;">Preview Templates</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function handleFileSelect(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+    const info = document.getElementById('fileInfo');
+    info.style.display = 'flex';
+    // Auto-fill title
+    const titleInput = document.querySelector('input[name="title"]');
+    if (!titleInput.value) {
+      titleInput.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+    }
+  }
+}
+
+const dropzone = document.getElementById('dropzone');
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  const input = document.getElementById('fileInput');
+  input.files = e.dataTransfer.files;
+  handleFileSelect(input);
+});
+</script>
 {% endblock %}

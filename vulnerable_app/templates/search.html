@@ -1,33 +1,90 @@
 {% extends "base.html" %}
-{% block title %}Search - VulnShop{% endblock %}
+{% block title %}Search — NexusFlow{% endblock %}
+{% block topbar_title %}Search{% endblock %}
+
 {% block content %}
-    <h1>Search users</h1>
-    <form method="GET" action="{{ url_for('search') }}" class="form-inline">
-        <input type="text" name="q" placeholder="Search by username..." value="{{ query }}">
-        <button type="submit">Search</button>
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Search</h1>
+      <p>Find documents, projects, and team members across your workspace.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <form action="/search" method="get">
+      <div style="display:flex;gap:12px;align-items:flex-end;">
+        <div class="form-group" style="flex:1;margin-bottom:0;">
+          <label>Search query</label>
+          <input type="text" name="q" value="{{ query }}" placeholder="Try 'brand guidelines', 'API', 'mobile'…" style="font-size:1rem;padding:12px 16px;"/>
+        </div>
+        <button type="submit" class="btn btn-primary" style="padding:12px 24px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Search
+        </button>
+      </div>
     </form>
+  </div>
 
-    {% if query %}
-        <p>Showing results for: {{ query|safe }}</p>
-    {% endif %}
+  {% if query %}
+  <!-- VULN: Reflected XSS — query is rendered unescaped via |safe -->
+  <div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-size:0.88rem;color:var(--text-2);">
+      Showing results for: <strong style="color:var(--text);">{{ query | safe }}</strong>
+      &nbsp;·&nbsp; <span style="color:var(--text-3);">{{ results|length }} result{{ 's' if results|length != 1 }}</span>
+    </div>
+    <a href="/search" class="btn btn-ghost btn-sm">Clear</a>
+  </div>
 
-    {% if error %}
-        <p class="error">Database error: {{ error }}</p>
-    {% endif %}
+  {% if results %}
+  <div class="search-results">
+    {% for doc in results %}
+    <a href="/documents/{{ doc.id }}" class="result-item">
+      <div style="width:40px;height:40px;background:var(--primary-glow);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:0.65rem;font-weight:700;flex-shrink:0;">
+        {{ doc.filename.rsplit('.',1)[-1].upper() if doc.filename else 'FILE' }}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:0.92rem;font-weight:600;margin-bottom:3px;">{{ doc.title }}</div>
+        <div style="font-size:0.78rem;color:var(--text-3);">{{ doc.description[:120] + '…' if doc.description and doc.description|length > 120 else doc.description or 'No description' }}</div>
+      </div>
+      <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <span class="badge badge-{{ 'orange' if doc.is_private else 'teal' }}">{{ 'Private' if doc.is_private else 'Shared' }}</span>
+        <span style="font-size:0.72rem;color:var(--text-3);">{{ doc.created_at.strftime('%b %d, %Y') }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state card">
+    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--text-3);margin:0 auto 16px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <h3>No results found</h3>
+    <p style="margin-top:6px;">No documents matched "<strong>{{ query | safe }}</strong>". Try different keywords or check your spelling.</p>
+  </div>
+  {% endif %}
 
-    {% if results %}
-        <table class="results-table">
-            <tr><th>ID</th><th>Username</th><th>Email</th><th>Bio</th></tr>
-            {% for r in results %}
-            <tr>
-                <td>{{ r[0] }}</td>
-                <td>{{ r[1] }}</td>
-                <td>{{ r[2] }}</td>
-                <td>{{ r[3] }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    {% elif query %}
-        <p>No results found.</p>
-    {% endif %}
+  {% else %}
+  <!-- Search suggestions -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px;">
+    {% for suggestion in ['Brand Guidelines', 'API Architecture', 'Mobile UX', 'Marketing', 'SSO Integration'] %}
+    <a href="/search?q={{ suggestion }}" style="text-decoration:none;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;font-size:0.85rem;color:var(--text-2);display:flex;align-items:center;gap:10px;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        {{ suggestion }}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="margin-bottom:16px;">All Documents</div>
+    <div class="doc-grid">
+      {% for doc in results if not query %}
+      {% endfor %}
+    </div>
+    <div style="text-align:center;padding:20px 0;">
+      <p style="font-size:0.88rem;">Enter a search query above to find documents, or <a href="/documents">browse all documents</a>.</p>
+    </div>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}
