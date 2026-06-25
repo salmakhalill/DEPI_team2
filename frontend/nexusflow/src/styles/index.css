@@ -1,11 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Michroma&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --cyan: #1aaec5;
+  --cyan: #22d3ee;
   --purple: #a855f7;
   --green: #10b981;
   --amber: #f59e0b;
@@ -28,7 +27,6 @@ html, body, #root {
 body {
   background: #020817;
   color: #e2e8f0;
-  
   font-family: 'Space Mono', monospace;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -124,17 +122,17 @@ body {
 
 /* Scan button */
 .scan-btn {
-  background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(85, 99, 247, 0.2));
+  background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(168,85,247,0.2));
   background-size: 200% 100%;
   border: 1px solid rgba(34,211,238,0.5);
   color: #22d3ee;
   transition: all 0.3s ease;
-  font-family: "Michroma", sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   letter-spacing: 0.15em;
 }
 
 .scan-btn:hover {
-  background: linear-gradient(135deg, rgba(34,211,238,0.35), rgba(90, 85, 247, 0.35));
+  background: linear-gradient(135deg, rgba(34,211,238,0.35), rgba(168,85,247,0.35));
   border-color: #22d3ee;
   box-shadow: 0 0 20px rgba(34,211,238,0.4), 0 0 40px rgba(34,211,238,0.15);
   animation: shimmer 1.5s linear infinite;
