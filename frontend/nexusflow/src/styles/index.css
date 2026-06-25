@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cyan: #22d3ee;
+  --purple: #a855f7;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --navy: #0c1445;
+  --obsidian: #020817;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background: #020817;
+  color: #e2e8f0;
+  font-family: 'Space Mono', monospace;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+::-webkit-scrollbar-thumb { background: rgba(34,211,238,0.3); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(34,211,238,0.5); }
+
+@keyframes blobFloat {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%      { transform: translate(30px,-20px) scale(1.08); }
+  66%      { transform: translate(-20px,15px) scale(0.95); }
+}
+
+@keyframes statusPulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(1.4); }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scanLine {
+  from { transform: translateY(-5px); }
+  to   { transform: translateY(100vh); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes particleDown {
+  0%   { top: 0%;   opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+@keyframes phaseComplete {
+  0%   { opacity: 0; transform: scale(0.5) translateY(10px); }
+  60%  { opacity: 1; transform: scale(1.15) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes progressFill {
+  from { width: 0%; }
+}
+
+@keyframes nodeActivate {
+  0%   { box-shadow: 0 0 0px var(--cyan); }
+  50%  { box-shadow: 0 0 30px var(--cyan), 0 0 60px rgba(34,211,238,0.3); }
+  100% { box-shadow: 0 0 15px var(--cyan); }
+}
+
+@keyframes checkmarkDraw {
+  from { stroke-dashoffset: 30; opacity: 0; }
+  to   { stroke-dashoffset: 0;  opacity: 1; }
+}
+
+@keyframes ripple {
+  0%   { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes findingSlideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-slide-up { animation: fadeSlideUp 0.6s ease forwards; }
+.animate-phase-complete { animation: phaseComplete 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+/* Glass panel */
+.glass {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+}
+
+.glass-card {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+}
+
+/* Scan button */
+.scan-btn {
+  background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(168,85,247,0.2));
+  background-size: 200% 100%;
+  border: 1px solid rgba(34,211,238,0.5);
+  color: #22d3ee;
+  transition: all 0.3s ease;
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.15em;
+}
+
+.scan-btn:hover {
+  background: linear-gradient(135deg, rgba(34,211,238,0.35), rgba(168,85,247,0.35));
+  border-color: #22d3ee;
+  box-shadow: 0 0 20px rgba(34,211,238,0.4), 0 0 40px rgba(34,211,238,0.15);
+  animation: shimmer 1.5s linear infinite;
+}
+
+.scan-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  animation: none;
+}
+
+/* Input style */
+.cyber-input {
+  background: rgba(2,8,23,0.8);
+  border: 1px solid rgba(34,211,238,0.2);
+  color: #e2e8f0;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  border-radius: 12px;
+  padding: 12px 16px;
+  width: 100%;
+  outline: none;
+}
+
+.cyber-input::placeholder { color: rgba(148,163,184,0.4); }
+
+.cyber-input:focus {
+  border-color: rgba(34,211,238,0.6);
+  box-shadow: 0 0 0 3px rgba(34,211,238,0.08), 0 0 20px rgba(34,211,238,0.1);
+}
+
+/* Grid overlay */
+.grid-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(34,211,238,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,211,238,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── Extra animations needed ────────────────────────────────────────── */
+@keyframes findingSlideIn {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes checkmarkDraw {
+  from { stroke-dashoffset: 18; opacity: 0; }
+  to   { stroke-dashoffset: 0;  opacity: 1; }
+}
+
+@keyframes ripple {
+  0%   { transform: scale(0.85); opacity: 0.5; }
+  100% { transform: scale(2.2);  opacity: 0; }
+}
+
+/* Smooth scrollbar everywhere */
+* { scrollbar-width: thin; scrollbar-color: rgba(34,211,238,0.25) transparent; }
