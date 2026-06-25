@@ -1,0 +1,25 @@
+{
+  "vulnerability": "Sensitive File Disclosure",
+  "cases": [
+    {
+      "id": "sfd-env-leakage",
+      "payload": "/.env",
+      "description": "Checks for environment variables config exposure."
+    },
+    {
+      "id": "sfd-git-exposure",
+      "payload": "/.git/config",
+      "description": "Checks for internal source version layout exposure."
+    },
+    {
+      "id": "sfd-sqlite-exposure",
+      "payload": "/db.sqlite",
+      "description": "Checks for production database file disclosure."
+    },
+    {
+      "id": "sfd-backup-exposure",
+      "payload": "/backup.zip",
+      "description": "Checks for compressed administrative server snapshots."
+    }
+  ]
+}
