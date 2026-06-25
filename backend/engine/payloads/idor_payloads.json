@@ -1,0 +1,20 @@
+{
+  "vulnerability": "Insecure Direct Object Reference",
+  "cases": [
+    {
+      "id": "idor-numeric-enumeration-1",
+      "payload": "1",
+      "description": "Tests for admin or primary user object reference logic."
+    },
+    {
+      "id": "idor-numeric-enumeration-2",
+      "payload": "2",
+      "description": "Tests for sequential account structural boundary leakage."
+    },
+    {
+      "id": "idor-numeric-enumeration-3",
+      "payload": "3",
+      "description": "Tests for secondary object enumeration logic."
+    }
+  ]
+}
