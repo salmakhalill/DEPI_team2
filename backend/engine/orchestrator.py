@@ -62,7 +62,7 @@ class Orchestrator:
         spider = PlaywrightSpider(
             target_url=self.target_url, 
             cookies=self.cookies,
-            log_callback=self.send_live_log  # <-- ده السحر اللي هيخلي السبايدر ينطق لايف
+            log_callback=self.send_live_log  
         )
         
         self.send_live_log(f"[*] Dispatching asynchronous spider to crawl: {self.target_url}")
@@ -108,16 +108,17 @@ class Orchestrator:
         distribution = {"critical": 0, "high": 0, "medium": 0, "low": 0}
         
         for f in findings:
-            vuln_type = "SQL Injection" 
+            # 1. Dynamic Vulnerability Type instead of Hardcoded SQLi
+            # Assuming your Finding model has a 'title' or 'name' attribute
+            vuln_type = f.title  
             severity = f.threat_level.lower()
             
-            # Extract raw steps and evidence fields strictly to prevent NoneType rendering errors
             poc_data = {
                 "intro_text": f.proof_of_concept.intro_text if f.proof_of_concept else "Vulnerability verified via automated payload reflection.",
                 "steps_to_reproduce": f.proof_of_concept.steps_to_reproduce if f.proof_of_concept else [],
                 "evidence": {
-                    "request": f.proof_of_concept.evidence.request if f.proof_of_concept and f.proof_of_concept.evidence else "",
-                    "response": f.proof_of_concept.evidence.response if f.proof_of_concept and f.proof_of_concept.evidence else ""
+                    "request": f.proof_of_concept.evidence.request if f.proof_of_concept and getattr(f.proof_of_concept, 'evidence', None) else "",
+                    "response": f.proof_of_concept.evidence.response if f.proof_of_concept and getattr(f.proof_of_concept, 'evidence', None) else ""
                 }
             }
             
@@ -125,13 +126,14 @@ class Orchestrator:
                 if severity in distribution:
                     distribution[severity] += 1
                 
+                # 2. Map all fields dynamically from the 'f' (Finding) object
                 aggregated_findings[vuln_type] = {
-                    "id": "VULN-SQLI-01",
-                    "title": "SQL Injection (SQLi)",
+                    "id": getattr(f, 'vuln_id', f"VULN-{vuln_type.upper().replace(' ', '-')[:10]}"), # Dynamic ID
+                    "title": f.title,
                     "owasp_category": f.owasp_category,
                     "threat_level": f.threat_level,
                     "cvss_score": f.cvss_score,
-                    "description": "The application fails to properly sanitize user-supplied input before concatenating it into internal dynamic SQL query blocks, allowing arbitrary command execution.",
+                    "description": getattr(f, 'description', 'No description provided.'), # Dynamic description
                     "business_impact": f.business_impact,
                     "recommendations": f.recommendations,
                     "references": f.references,

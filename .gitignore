@@ -8,4 +8,4 @@ venv
 tree.txt
 notes.md
 tests
-test_crawler.py
+scanners

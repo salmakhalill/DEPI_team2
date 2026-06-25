@@ -7,12 +7,6 @@ from engine.payloads.payload_manager import PayloadManager
 
 class SQLInjectionScanner(BaseScanner):
     
-    # FIX: Added __init__ to accept the WebSocket log_callback
-    def __init__(self, target_url, client, log_callback=None):
-        self.target_url = target_url
-        self.client = client
-        self.log_callback = log_callback
-    
     def run_scan(self, endpoints: List[Endpoint]) -> List[Finding]:
         findings = []
         # Load centralized SQLi payload cases and mapping regex signatures
@@ -53,7 +47,7 @@ class SQLInjectionScanner(BaseScanner):
                                     self.log_callback(f"🔥 [VULN] SQL Injection Confirmed! Target: {ep.url} | Param: '{param}'")
                                 
                                 finding = Finding(
-                                    title=f"SQL Injection Vulnerability in '{param}' parameter",
+                                    title=f"SQL Injection (SQLi)",
                                     owasp_category="A03:2021 - Injection",
                                     threat_level="Critical",
                                     cvss_score="9.8 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)",

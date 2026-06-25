@@ -6,9 +6,10 @@ from engine.models.finding import Finding
 from engine.core.http_client import SafeHttpClient
 
 class BaseScanner(ABC):
-    def __init__(self, target_url: str, client: SafeHttpClient):
+    def __init__(self, target_url: str, client: SafeHttpClient, log_callback=None):
         self.target_url = target_url
         self.client = client
+        self.log_callback = log_callback
 
     def execute(self, endpoints: List[Endpoint]) -> List[Finding]:
         """
