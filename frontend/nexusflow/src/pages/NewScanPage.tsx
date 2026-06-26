@@ -31,7 +31,7 @@ export default function NewScanPage() {
     setError(null);
 
     try {
-      const res = await startScan({ target_url: targetUrl.trim(), raw_cookie_header: `session=${cookieHeader.trim()}`});
+      const res = await startScan({ target_url: targetUrl.trim(), raw_cookie_header: cookieHeader.trim() });
       navigate(`/scan/${res.data.scan_id}/live`);
     } catch (err: any) {
       const status = err?.response?.status;
@@ -77,14 +77,15 @@ export default function NewScanPage() {
               New Scan
             </div>
             <h1 style={{
-              fontFamily: '"Bebas Neue", sans-serif',
-              fontSize: 40, letterSpacing: '0.06em',
-              background: 'linear-gradient(135deg, #f1f5f9, #22d3ee)',
+              fontFamily: '"Michroma", sans-serif',
+              fontSize: 35, letterSpacing: '0.06em',
+              fontWeight: 600,
+              background: 'linear-gradient(135deg, #22d3ee 00%, #1d6999 100%)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               marginBottom: 8,
             }}>Configure Target</h1>
             <p style={{
-              fontSize: 11, color: 'rgba(148,163,184,0.55)',
+              fontSize: 12, color: 'rgba(148,163,184,0.55)',
               fontFamily: '"Space Mono", monospace', lineHeight: 1.7,
             }}>Enter the target URL and optional session cookies below.</p>
           </div>
@@ -100,7 +101,7 @@ export default function NewScanPage() {
           }}>
             <span style={{ color: '#f59e0b', fontSize: 14, flexShrink: 0 }}>⚠</span>
             <span style={{
-              fontSize: 10, color: 'rgba(245,158,11,0.8)',
+              fontSize: 11, color: 'rgba(245,158,11,0.8)',
               fontFamily: '"Space Mono", monospace', lineHeight: 1.7,
               letterSpacing: '0.04em',
             }}>
@@ -116,7 +117,7 @@ export default function NewScanPage() {
                 display: 'block',
                 fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase',
                 color: urlError ? '#ef4444' : '#22d3ee',
-                fontFamily: '"Space Mono", monospace',
+                fontFamily: '"Michroma", monospace',
                 marginBottom: 8,
               }}>
                 Target URL <span style={{ color: '#ef4444' }}>*</span>
@@ -152,8 +153,8 @@ export default function NewScanPage() {
               <label style={{
                 display: 'block',
                 fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase',
-                color: 'rgba(168,85,247,0.8)',
-                fontFamily: '"Space Mono", monospace',
+                color: 'rgb(245, 56, 255)',
+                fontFamily: '"Michroma", monospace',
                 marginBottom: 8,
               }}>
                 Session Cookies{' '}
