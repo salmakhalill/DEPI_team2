@@ -32,10 +32,10 @@ export default function Navbar() {
           color: '#22d3ee',
         }}>⬡</div>
         <span style={{
-          fontFamily: '"Bebas Neue", sans-serif',
-          fontSize: 22,
+          fontFamily: '"Michroma", sans-serif',
+          fontSize: 18,
           letterSpacing: '0.1em',
-          background: 'linear-gradient(135deg, #f1f5f9, #22d3ee)',
+          background: 'linear-gradient(135deg, #22d3ee, #22d3ee)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
@@ -66,7 +66,7 @@ export default function Navbar() {
               padding: '6px 18px',
               borderRadius: 8,
               fontSize: 11,
-              fontFamily: '"Bebas Neue", sans-serif',
+              fontFamily: '"Michroma", sans-serif',
               letterSpacing: '0.12em',
               background: 'rgba(34,211,238,0.08)',
               border: '1px solid rgba(34,211,238,0.3)',
