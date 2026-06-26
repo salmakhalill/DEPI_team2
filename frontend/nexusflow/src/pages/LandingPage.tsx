@@ -30,9 +30,11 @@ export default function LandingPage() {
             fontSize: 10, letterSpacing: '0.15em',
             color: '#22d3ee', textTransform: 'uppercase',
             marginBottom: 24,
+             marginTop: 24,
           }}>
             <div style={{
               width: 5, height: 5, borderRadius: '50%',
+             
               background: '#22d3ee', boxShadow: '0 0 6px #22d3ee',
               animation: 'statusPulse 1.2s ease-in-out infinite',
             }} />
@@ -41,20 +43,21 @@ export default function LandingPage() {
 
           {/* Headline */}
           <h1 style={{
-            fontFamily: '"Bebas Neue", sans-serif',
-            fontSize: 'clamp(52px, 8vw, 96px)',
+            fontFamily: '"Michroma", sans-serif',
             letterSpacing: '0.04em',
-            lineHeight: 0.95,
+            lineHeight: 1.02,
             marginBottom: 24,
           }}>
             <span style={{
-              background: 'linear-gradient(135deg, #f1f5f9 0%, #22d3ee 50%, #a855f7 100%)',
+              background: 'linear-gradient(135deg, #22d3ee 00%, #1d6999 100%)',
               WebkitBackgroundClip: 'text',
+              fontWeight: 600,
+              fontSize: 'clamp(92px, 8vw, 76px)',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
             }}>Find Vulns.</span>
             <br />
-            <span style={{ color: 'rgba(148,163,184,0.5)' }}>Before They Do.</span>
+            <span style={{ color: 'rgba(148,163,184,0.5)' , fontSize: 'clamp(22px, 8vw, 50px)' }}>Before They Do</span>
           </h1>
 
           <p style={{
@@ -218,44 +221,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Vulnerability types */}
-        <div style={{ maxWidth: 700, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <div style={{
-              fontSize: 10, color: 'rgba(34,211,238,0.6)',
-              letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8,
-            }}>— Coverage —</div>
-            <h2 style={{
-              fontFamily: '"Bebas Neue", sans-serif',
-              fontSize: 28, letterSpacing: '0.06em', color: '#f1f5f9',
-            }}>Vulnerabilities Detected</h2>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            {[
-              { name: 'SQL Injection', owasp: 'OWASP A03:2021', color: '#ef4444', status: 'Active', icon: '☠' },
-              { name: 'XSS — Cross-Site Scripting', owasp: 'OWASP A03:2021', color: '#f59e0b', status: 'Beta', icon: '⚡' },
-            ].map(v => (
-              <div key={v.name} className="glass-card" style={{ padding: 18 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontSize: 16, color: v.color }}>{v.icon}</span>
-                  <span style={{
-                    padding: '2px 8px', borderRadius: 20, fontSize: 8,
-                    background: `${v.color}18`, border: `1px solid ${v.color}`,
-                    color: v.color, letterSpacing: '0.1em', fontWeight: 700,
-                  }}>{v.status}</span>
-                </div>
-                <div style={{
-                  fontFamily: '"Bebas Neue", sans-serif',
-                  fontSize: 16, letterSpacing: '0.06em', color: '#f1f5f9', marginBottom: 4,
-                }}>{v.name}</div>
-                <div style={{ fontSize: 9, color: 'rgba(148,163,184,0.4)', letterSpacing: '0.08em' }}>
-                  {v.owasp}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        
       </main>
 
       {/* Footer */}
