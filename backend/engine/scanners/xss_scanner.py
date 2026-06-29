@@ -49,25 +49,40 @@ class XSSScanner(BaseScanner):
     2. Stored XSS    — POST forms, verified on the parent view page
     """
 
+    CONTEXT_PAYLOADS = {
+        "html": [
+            "<script>alert(1)</script>",
+            "<img src=x onerror=alert(1)>",
+            "<svg onload=alert(1)>",
+        ],
+        "attr": [
+            '"><script>alert(1)</script>',
+            '" onmouseover="alert(1)',
+        ],
+        "js": [
+            '";alert(1)//',
+            "';alert(1)//",
+        ],
+    }
+
     def run_scan(self, endpoints: List[Endpoint]) -> List[Finding]:
         findings = []
-        xss_data = PayloadManager.get_payloads("xss")
+        xss_cases = PayloadManager.get_payloads("xss")
 
-        reflected_cases  = xss_data.get("reflected_cases", [])
-        stored_cases     = xss_data.get("stored_cases", [])
-        context_payloads = xss_data.get("context_payloads", {})
-        waf_cases        = xss_data.get("waf_bypass_cases", [])
+        reflected_cases = [c for c in xss_cases if "stored" not in c.get("id", "") and "waf" not in c.get("id", "")]
+        stored_cases    = [c for c in xss_cases if "stored" in c.get("id", "")]
+        waf_cases       = [c for c in xss_cases if "waf"    in c.get("id", "")]
 
         print(f"[XSS] Starting scan on {len(endpoints)} endpoints...")
 
-        findings += self._scan_reflected(endpoints, reflected_cases, context_payloads, waf_cases)
+        findings += self._scan_reflected(endpoints, reflected_cases, waf_cases)
         findings += self._scan_stored(endpoints, stored_cases)
 
         print(f"[XSS] Done — {len(findings)} finding(s) confirmed.")
         return findings
 
     # ── Layer 1: Reflected XSS ──────────────────────────────────────────
-    def _scan_reflected(self, endpoints, reflected_cases, context_payloads, waf_cases) -> List[Finding]:
+    def _scan_reflected(self, endpoints, reflected_cases, waf_cases) -> List[Finding]:
         findings = []
 
         for ep in endpoints:
@@ -86,7 +101,7 @@ class XSSScanner(BaseScanner):
             for param in ep.params:
                 vuln_found = False
 
-                # Step A: Standard payloads from JSON
+                # Step A: Standard payloads
                 for case in reflected_cases:
                     if vuln_found:
                         break
@@ -115,7 +130,7 @@ class XSSScanner(BaseScanner):
                         ctx = _detect_context(canary_resp.text, canary)
                         print(f"[XSS] Context for '{param}' @ {ep.url}: [{ctx}]")
 
-                        for payload in context_payloads.get(ctx, context_payloads.get("html", [])):
+                        for payload in self.CONTEXT_PAYLOADS.get(ctx, self.CONTEXT_PAYLOADS["html"]):
                             result = self._try_reflected(ep, param, payload, base_params, baseline_text, ctx_override=ctx)
                             if result:
                                 findings.append(result)
