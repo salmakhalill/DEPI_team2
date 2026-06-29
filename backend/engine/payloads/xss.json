@@ -32,10 +32,16 @@
       "description": "Breaks out of a single-quoted attribute before injecting a script tag."
     },
     {
-      "id": "xss-stored-comment-01",
-      "payload": "<script>alert('stored-xss')</script>",
-      "match_regex": "<script>alert\\('stored-xss'\\)</script>",
-      "description": "Payload submitted via comment form persists in the database and executes on every page load — Stored XSS."
+      "id": "xss-stored-01",
+      "payload": "<script>alert(1)</script>",
+      "match_regex": "<script>alert\\(1\\)</script>",
+      "description": "Stored script injection — persists in the database and executes on every page load."
+    },
+    {
+      "id": "xss-stored-img-01",
+      "payload": "<img src=x onerror=alert(1)>",
+      "match_regex": "onerror\\s*=\\s*[\"']?alert\\(1\\)",
+      "description": "Stored image tag with onerror handler — persists and executes on view."
     }
   ]
 }
