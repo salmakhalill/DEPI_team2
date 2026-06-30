@@ -1,0 +1,29 @@
+{
+  "vulnerability": "Authentication Flaws",
+  "rate_limit": {
+    "attempt_count": 15,
+    "block_keywords": ["too many", "try again later", "locked out", "rate limit", "throttle", "blocked"],
+    "failure_keywords": ["invalid", "incorrect", "wrong", "failed", "خطأ", "غير صحيح"]
+  },
+  "weak_password": {
+    "cases": [
+      {
+        "id": "weak-password-trivial",
+        "payload": "123456",
+        "severity": "Medium",
+        "cvss": "5.3",
+        "description": "Application accepts trivially guessable numeric passwords without complexity enforcement."
+      },
+      {
+        "id": "weak-password-length",
+        "payload": "a1!",
+        "severity": "Medium",
+        "cvss": "5.3",
+        "description": "Application accepts extremely short passwords bypassing standard length requirements."
+      }
+    ]
+  },
+  "session": {
+    "required_flags": ["httponly", "secure", "samesite"]
+  }
+}
