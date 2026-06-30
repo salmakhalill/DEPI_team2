@@ -1,33 +1,36 @@
 import traceback
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import List
 from engine.models.endpoint import Endpoint
 from engine.models.finding import Finding
-from engine.core.http_client import SafeHttpClient
+from engine.core.http_client import AsyncSafeHttpClient
 
 class BaseScanner(ABC):
-    def __init__(self, target_url: str, client: SafeHttpClient):
+    """
+    Abstract blueprint for asynchronous vulnerability scanners.
+    Enforces non-blocking execution and crash isolation across modular scanners.
+    """
+    def __init__(self, target_url: str, client: AsyncSafeHttpClient, log_callback=None):
         self.target_url = target_url
         self.client = client
+        self.log_callback = log_callback
 
-    def execute(self, endpoints: List[Endpoint]) -> List[Finding]:
+    async def execute(self, endpoints: List[Endpoint]) -> List[Finding]:
         """
-        Wrapper to isolate crashes. The orchestrator calls this, NOT run_scan directly.
-        This ensures one buggy scanner doesn't crash the entire assessment.
+        Asynchronous execution wrapper. Isolates exceptions to prevent 
+        a single scanner failure from halting the entire orchestration process.
         """
         try:
-            findings = self.run_scan(endpoints)
+            findings = await self.run_scan(endpoints)
             return findings if findings else []
         except Exception as e:
-            print(f"[-] [Scanner Crash] {self.__class__.__name__} failed: {str(e)}")
-            # uncomment the next line during active development to see exact errors
-            # traceback.print_exc() 
+            print(f"[-] [Scanner Exception] {self.__class__.__name__} encountered a fatal error: {str(e)}")
             return []
 
     @abstractmethod
-    def run_scan(self, endpoints: List[Endpoint]) -> List[Finding]:
+    async def run_scan(self, endpoints: List[Endpoint]) -> List[Finding]:
         """
-        Team members MUST implement this method.
-        It should iterate over endpoints, inject payloads, and return a list of Finding objects.
+        Core vulnerability detection logic. 
+        Must be implemented by all derived scanner classes.
         """
         pass

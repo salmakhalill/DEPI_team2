@@ -4,43 +4,50 @@ import threading
 import traceback
 import asyncio
 import platform
+import tempfile 
+from datetime import datetime
 from django.utils import timezone
 from django.http import FileResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
 from .models import Scan
 from engine.orchestrator import Orchestrator
-from engine.core.http_client import SafeHttpClient
+from engine.core.http_client import AsyncSafeHttpClient
+from engine.core.scan_context import ScanContext
 from reporter.report_generator import generate_pdf 
-from engine.scanners.sqli_scanner import SQLInjectionScanner
+from reporter.report_builder import ReportBuilder
 
 def run_scan_in_background(scan_id, target_url, dynamic_cookies):
-    # FIX: Windows specific thread setup for Playwright asyncio subprocesses
     if platform.system() == 'Windows':
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
     
-    # Initialize a new event loop for this specific background thread
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    # Temporary wait to allow WebSocket frontend connection
-    time.sleep(10) 
+    time.sleep(10) # TODO: Refactor this blocking call when migrating to Celery
 
     try:
         scan = Scan.objects.get(id=scan_id)
-        
-        orchestrator = Orchestrator(scan_id=scan_id, target_url=target_url, cookies=dynamic_cookies)
-        client = SafeHttpClient(cookies=dynamic_cookies, allow_local=True)
-        
-        # FIX: Pass the orchestrator's broadcast function to the Scanner plugin
-        scanner = SQLInjectionScanner(
-            target_url, 
-            client, 
-            log_callback=orchestrator.send_live_log # <-- هنا مررنا الدالة للاسكانر
+
+        # 1. Initialize the Global Scan Context
+        scan_context = ScanContext(
+            target_url=target_url, 
+            cookies=dynamic_cookies,
+            max_requests=15000
         )
-        orchestrator.register_scanner(scanner)
+
+        # 2. Inject Context into dependencies
+        client = AsyncSafeHttpClient(context=scan_context, allow_local=True)
+        orchestrator = Orchestrator(scan_id=scan_id, context=scan_context, client=client)
+
+        orchestrator.load_scanners()
+
+        # 3. Execute Assessment (Returns raw List[Finding])
+        raw_findings = orchestrator.run_assessment()
         
+        # 4. Build Structured JSON Report
         final_report_json = orchestrator.run_assessment()
         
         scan.status = 'Completed'
@@ -49,7 +56,6 @@ def run_scan_in_background(scan_id, target_url, dynamic_cookies):
         scan.full_report_json = final_report_json
         scan.save()
         
-        # Final broadcast to notify the frontend that the process has concluded natively
         orchestrator.send_live_log(f"[+] Scan {scan_id} Completed Successfully!")
         print(f"[+] Scan {scan_id} Completed Successfully!")
         
@@ -58,16 +64,15 @@ def run_scan_in_background(scan_id, target_url, dynamic_cookies):
         scan.status = 'Failed'
         scan.save()
         
-        # Print the FULL error traceback to the terminal to catch the silent bug
         print(f"[-] Scan {scan_id} Failed with exception:")
         traceback.print_exc() 
         
         try:
-            orchestrator.send_live_log(f"[-] Fatal Scan Error: {str(e)}")
-        except:
+            if 'orchestrator' in locals():
+                orchestrator.send_live_log(f"[-] Fatal Scan Error: {str(e)}")
+        except Exception:
             pass
     finally:
-        # Clean up the event loop safely
         loop.close()
 
 class StartScanView(APIView):
@@ -77,16 +82,7 @@ class StartScanView(APIView):
 
         if not target_url:
             return Response({"error": "target_url is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Automatic Seed URL Redirection for Authenticated Frameworks (Flask/Django SaaS)
-        # If user submits root URL, append /dashboard to puncture the auth layer directly
-        from urllib.parse import urlparse
-        parsed_target = urlparse(target_url)
-        if parsed_target.path == "" or parsed_target.path == "/":
-            target_url = f"{parsed_target.scheme}://{parsed_target.netloc}/dashboard"
-            print(f"[*] Root URL detected. Automatically routing seed path to: {target_url}")
-
-        # Robust Cookie Sanitization Matrix
+        
         dynamic_cookies = {}
         if raw_cookie_header:
             clean_header = raw_cookie_header.replace("Cookie:", "").replace("cookie:", "").strip()
@@ -99,7 +95,6 @@ class StartScanView(APIView):
 
         scan = Scan.objects.create(target_url=target_url)
         
-        # Fire and forget mechanism: dispatch background thread for scanning logic
         thread = threading.Thread(target=run_scan_in_background, args=(scan.id, target_url, dynamic_cookies))
         thread.start()
 
@@ -115,14 +110,14 @@ class DownloadReportView(APIView):
         if scan.status != 'Completed' or not scan.full_report_json:
             return Response({"error": "Report not ready"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Output target PDF path config
-        output_pdf_path = f"/tmp/NexusFlow_Report_{scan_id}.pdf"
+        temp_dir = tempfile.gettempdir()
+        output_pdf_path = os.path.join(temp_dir, f"NexusFlow_Report_{scan_id}.pdf")
         
-        # FIXED: Pass strictly as positional arguments to guarantee mapping compatibility
         generate_pdf(scan.full_report_json, output_pdf_path)
 
         if os.path.exists(output_pdf_path):
             response = FileResponse(open(output_pdf_path, 'rb'), content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="Penetration_Test_Report_{scan_id}.pdf"'
             return response
+            
         return Response({"error": "Failed to locate generated PDF file"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
