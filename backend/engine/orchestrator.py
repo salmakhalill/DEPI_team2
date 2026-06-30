@@ -1,40 +1,46 @@
 import asyncio
-import concurrent.futures
+import threading
 from datetime import datetime
 from typing import List, Dict, Any
-from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
+from engine.storage.finding_repository import FindingRepository
+from engine.correlation.chain_engine import CorrelationEngine
+from engine.core.scan_context import ScanContext
+from engine.models.finding import Finding
+from engine.core.http_client import AsyncSafeHttpClient
 from engine.crawler.spider import PlaywrightSpider
 from engine.extractor.param_extractor import ParamExtractor
-from engine.models.finding import Finding
+from engine.registry.scanner_registry import SCANNER_REGISTRY
+from reporter.report_builder import ReportBuilder
 
 class Orchestrator:
-    def __init__(self, scan_id: str, target_url: str, cookies: dict = None):
-        # We need the scan_id to dynamically identify the correct WebSocket room
+    """
+    Coordinates the execution flow of the DAST engine.
+    Responsible for initializing the scope, invoking the crawler,
+    delegating execution to scanners, running the correlation engine,
+    and returning the final unified report.
+    """
+
+    def __init__(self, scan_id: str, context: ScanContext, client: AsyncSafeHttpClient = None):
         self.scan_id = str(scan_id)
-        self.target_url = target_url
-        self.cookies = cookies or {}
+        self.context = context
+        self.client = client
         self.start_time = datetime.utcnow()
-        self.scanners = [] # Container array for active technical assessment extensions
+        self.scanners = []
         
-        # Initialize the WebSocket channel layer and group name for live telemetry
+        # Initialize the Central Storage Layer
+        self.repository = FindingRepository()
+        
         self.channel_layer = get_channel_layer()
         self.room_group_name = f'scan_{self.scan_id}'
+        
 
-    def send_live_log(self, message_text: str):
-        """
-        Pushes a live log message securely to the WebSocket frontend.
-        Uses asyncio.run inside a detached micro-thread to completely 
-        bypass any Windows/Playwright Event Loop thread constraints.
-        """
-        import threading
-        import asyncio
-
+    def send_live_log(self, message_text: str) -> None:
+        """Transmits telemetry data securely to the presentation layer via WebSockets."""
         def _broadcast():
             try:
                 if self.channel_layer:
-                    # Directly run the async group_send without relying on async_to_sync
                     asyncio.run(
                         self.channel_layer.group_send(
                             self.room_group_name,
@@ -44,147 +50,98 @@ class Orchestrator:
                             }
                         )
                     )
-            except Exception as e:
-                # Fallback for debugging if the channel layer fails
-                print(f"[WS Error] {e}")
+            except Exception as ex:
+                print(f"[-] [WebSocket Runtime Error] {str(ex)}")
         
-        # Fire and forget micro-thread
         threading.Thread(target=_broadcast).start()
 
-    def register_scanner(self, scanner_instance):
+    def register_scanner(self, scanner_instance) -> None:
+        """Appends a new scanner module to the execution pipeline."""
         self.scanners.append(scanner_instance)
-        self.send_live_log(f"[+] Successfully registered scanner module: {scanner_instance.__class__.__name__}")
+        self.send_live_log(f"[*] Module Initialized: {scanner_instance.__class__.__name__}")
+
+    def load_scanners(self) -> None:
+        """Instantiates all scanner classes defined in the global registry."""
+        for ScannerClass in SCANNER_REGISTRY:
+            scanner_instance = ScannerClass(
+                target_url=self.context.target_url,
+                client=self.client,
+                log_callback=self.send_live_log
+            )
+            self.register_scanner(scanner_instance)
 
     def run_assessment(self) -> Dict[str, Any]:
-        self.send_live_log("[*] Phase 1: Discovery & Attack Surface Mapping Initialization")
+        """
+        Executes the primary assessment phases: Discovery, Vulnerability Scanning,
+        Correlation (Chaining), and Report Generation.
+        Returns the final JSON report dictionary.
+        """
+        # ==========================================
+        # Phase 1: Recon & Attack Surface Discovery
+        # ==========================================
+        self.send_live_log("[*] Phase 1: Discovery & Attack Surface Mapping")
         
-        # FIX: Pass the WebSocket broadcast function directly to the Spider
         spider = PlaywrightSpider(
-            target_url=self.target_url, 
-            cookies=self.cookies,
+            target_url=self.context.target_url, 
+            cookies=self.context.cookies,
             log_callback=self.send_live_log  
         )
         
-        self.send_live_log(f"[*] Dispatching asynchronous spider to crawl: {self.target_url}")
-        
         raw_crawl_data = spider.crawl()
-        
         endpoints = ParamExtractor.extract(raw_crawl_data)
+        
         self.send_live_log(f"[+] Attack Surface Extracted: {len(endpoints)} unique endpoints discovered.")
-        print(f"[+] Attack Surface: {len(endpoints)} endpoints discovered.")
 
-        self.send_live_log("[*] Phase 2: Vulnerability Assessment (Concurrent Scans Initiated)")
-        print("[*] Phase 2: Vulnerability Assessment (Concurrent Scans)")
-        all_findings: List[Finding] = []
+        # ==========================================
+        # Phase 2: Vulnerability Assessment (Scanners)
+        # ==========================================
+        self.send_live_log("[*] Phase 2: Vulnerability Assessment (Asynchronous Execution)")
         
-        # Multithreaded execution loop across separate vulnerability scanning plugins
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            future_to_scanner = {
-                executor.submit(scanner.execute, endpoints): scanner 
-                for scanner in self.scanners
-            }
-            for future in concurrent.futures.as_completed(future_to_scanner):
-                scanner_name = future_to_scanner[future].__class__.__name__
-                try:
-                    findings = future.result()
-                    if findings:
-                        all_findings.extend(findings)
-                        self.send_live_log(f"[!] {scanner_name} completed and identified {len(findings)} vulnerable vectors.")
-                    else:
-                        self.send_live_log(f"[-] {scanner_name} completed cleanly. No vulnerabilities found.")
-                except Exception as exc:
-                    self.send_live_log(f"[!] Engine Error: {scanner_name} generated an exception: {exc}")
-
-        self.send_live_log("[*] Phase 3: Aggregating Threat Matrices and Generating Dynamic Payload")
-        print("[*] Phase 3: Generating Dynamic Payload")
-        
-        return self._build_master_json(all_findings)
-
-    def _build_master_json(self, findings: List[Finding]) -> Dict[str, Any]:
-        end_time = datetime.utcnow()
-        duration = (end_time - self.start_time).total_seconds()
-        
-        aggregated_findings: Dict[str, Dict[str, Any]] = {}
-        distribution = {"critical": 0, "high": 0, "medium": 0, "low": 0}
-        
-        for f in findings:
-            # 1. Dynamic Vulnerability Type instead of Hardcoded SQLi
-            # Assuming your Finding model has a 'title' or 'name' attribute
-            vuln_type = f.title  
-            severity = f.threat_level.lower()
+        async def run_all_scanners():
+            tasks = [scanner.execute(endpoints) for scanner in self.scanners]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
             
-            poc_data = {
-                "intro_text": f.proof_of_concept.intro_text if f.proof_of_concept else "Vulnerability verified via automated payload reflection.",
-                "steps_to_reproduce": f.proof_of_concept.steps_to_reproduce if f.proof_of_concept else [],
-                "evidence": {
-                    "request": f.proof_of_concept.evidence.request if f.proof_of_concept and getattr(f.proof_of_concept, 'evidence', None) else "",
-                    "response": f.proof_of_concept.evidence.response if f.proof_of_concept and getattr(f.proof_of_concept, 'evidence', None) else ""
-                }
-            }
-            
-            if vuln_type not in aggregated_findings:
-                if severity in distribution:
-                    distribution[severity] += 1
-                
-                # 2. Map all fields dynamically from the 'f' (Finding) object
-                aggregated_findings[vuln_type] = {
-                    "id": getattr(f, 'vuln_id', f"VULN-{vuln_type.upper().replace(' ', '-')[:10]}"), # Dynamic ID
-                    "title": f.title,
-                    "owasp_category": f.owasp_category,
-                    "threat_level": f.threat_level,
-                    "cvss_score": f.cvss_score,
-                    "description": getattr(f, 'description', 'No description provided.'), # Dynamic description
-                    "business_impact": f.business_impact,
-                    "recommendations": f.recommendations,
-                    "references": f.references,
-                    "status": f.status,
-                    "paths_list": [f.affected_path],
-                    "pocs": [poc_data]
-                }
-            else:
-                if f.affected_path not in aggregated_findings[vuln_type]["paths_list"]:
-                    aggregated_findings[vuln_type]["paths_list"].append(f.affected_path)
-                aggregated_findings[vuln_type]["pocs"].append(poc_data)
+            for scanner, result in zip(self.scanners, results):
+                scanner_name = scanner.__class__.__name__
+                if isinstance(result, Exception):
+                    self.send_live_log(f"[-] Engine Fault: {scanner_name} encountered an exception -> {str(result)}")
+                elif result:
+                    # Save findings to the central repository instead of a local list
+                    self.repository.save_all(result)
+                    self.send_live_log(f"[+] {scanner_name}: Discovered {len(result)} vulnerable vectors.")
+                else:
+                    self.send_live_log(f"[*] {scanner_name}: Completed cleanly with no findings.")
+                    
+            if hasattr(self.client, 'close'):
+                await self.client.close()
 
-        # Enforce strategic clean newline injection for the HTML table cell rendering context
-        for vuln_type in aggregated_findings:
-            aggregated_findings[vuln_type]["affected_path_html"] = "<br>".join(aggregated_findings[vuln_type]["paths_list"])
+        # Execute the asynchronous scanning pipeline
+        asyncio.run(run_all_scanners())
 
-        findings_summary_table = []
-        for vuln_type, data in aggregated_findings.items():
-            findings_summary_table.append({
-                "id": data["id"],
-                "finding_name": f"{data['title']} ({len(data['paths_list'])} Vulnerable Parameters Discovered)",
-                "risk": data["threat_level"],
-                "status": data["status"]
-            })
+        # ==========================================
+        # Phase 3: Attack Path Correlation (The Brain)
+        # ==========================================
+        self.send_live_log("[*] Phase 3: Executing Attack Path Correlation Engine")
+        correlation_engine = CorrelationEngine(
+            repository=self.repository, 
+            log_callback=self.send_live_log
+        )
+        # This will link isolated findings and inject new "Chain" findings into the repository
+        correlation_engine.run_correlation()
 
-        overall_threat = "Low"
-        if distribution["critical"] > 0: overall_threat = "Critical"
-        elif distribution["high"] > 0: overall_threat = "High"
-        elif distribution["medium"] > 0: overall_threat = "Medium"
+        # ==========================================
+        # Phase 4: Report Building
+        # ==========================================
+        self.send_live_log("[*] Phase 4: Generating Final JSON Report")
+        
+        # Fetch all findings (including the newly generated chains)
+        all_findings = self.repository.get_all()
+        
+        report_json = ReportBuilder.build_json_report(
+            scan_id=self.scan_id,
+            target_url=self.context.target_url,
+            findings=all_findings
+        )
 
-        self.send_live_log("[+] Scan Engine operations completed. Report payload is ready for compilation.")
-
-        return {
-            "report_metadata": {
-                "document_number": "T1-51.001",
-                "document_name": "Automated Vulnerability Assessment Report",
-                "date_generated": self.start_time.strftime("%Y-%m-%d"),
-                "document_author": "Automated Scanner Engine",
-                "document_review": "Tech Lead"
-            },
-            "scope": {
-                "timeline": {
-                    "start_date": self.start_time.strftime("%Y-%m-%d"),
-                    "duration_seconds": int(duration)
-                },
-                "targets": [{"url": self.target_url}]
-            },
-            "executive_summary": {
-                "overall_threat_level": overall_threat,
-                "aggregated_threat_distribution": distribution,
-                "findings_summary_table": findings_summary_table
-            },
-            "detailed_findings": list(aggregated_findings.values())
-        }
+        self.send_live_log("[+] Assessment pipeline concluded successfully.")
+        return report_json

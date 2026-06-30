@@ -4,25 +4,20 @@ import threading
 import traceback
 import asyncio
 import platform
-import tempfile # Secure cross-platform file path handling (Windows/Linux)
+import tempfile 
+from datetime import datetime
 from django.utils import timezone
 from django.http import FileResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
 from .models import Scan
 from engine.orchestrator import Orchestrator
-from engine.core.http_client import SafeHttpClient
+from engine.core.http_client import AsyncSafeHttpClient
+from engine.core.scan_context import ScanContext
 from reporter.report_generator import generate_pdf 
-
-# 1. Dynamic list of all available scanners.
-from engine.scanners.sqli_scanner import SQLInjectionScanner
-# from engine.scanners.xss_scanner import XSSScanner  
-
-AVAILABLE_SCANNERS = [
-    SQLInjectionScanner,
-    # XSSScanner,
-]
+from reporter.report_builder import ReportBuilder
 
 def run_scan_in_background(scan_id, target_url, dynamic_cookies):
     if platform.system() == 'Windows':
@@ -35,18 +30,24 @@ def run_scan_in_background(scan_id, target_url, dynamic_cookies):
 
     try:
         scan = Scan.objects.get(id=scan_id)
-        orchestrator = Orchestrator(scan_id=scan_id, target_url=target_url, cookies=dynamic_cookies)
-        client = SafeHttpClient(cookies=dynamic_cookies, allow_local=True)
+
+        # 1. Initialize the Global Scan Context
+        scan_context = ScanContext(
+            target_url=target_url, 
+            cookies=dynamic_cookies,
+            max_requests=15000
+        )
+
+        # 2. Inject Context into dependencies
+        client = AsyncSafeHttpClient(context=scan_context, allow_local=True)
+        orchestrator = Orchestrator(scan_id=scan_id, context=scan_context, client=client)
+
+        orchestrator.load_scanners()
+
+        # 3. Execute Assessment (Returns raw List[Finding])
+        raw_findings = orchestrator.run_assessment()
         
-        # 2. Dynamically register all scanners without code duplication (Open/Closed Principle)
-        for ScannerClass in AVAILABLE_SCANNERS:
-            scanner_instance = ScannerClass(
-                target_url, 
-                client, 
-                log_callback=orchestrator.send_live_log
-            )
-            orchestrator.register_scanner(scanner_instance)
-        
+        # 4. Build Structured JSON Report
         final_report_json = orchestrator.run_assessment()
         
         scan.status = 'Completed'
@@ -67,8 +68,9 @@ def run_scan_in_background(scan_id, target_url, dynamic_cookies):
         traceback.print_exc() 
         
         try:
-            orchestrator.send_live_log(f"[-] Fatal Scan Error: {str(e)}")
-        except:
+            if 'orchestrator' in locals():
+                orchestrator.send_live_log(f"[-] Fatal Scan Error: {str(e)}")
+        except Exception:
             pass
     finally:
         loop.close()
@@ -80,9 +82,6 @@ class StartScanView(APIView):
 
         if not target_url:
             return Response({"error": "target_url is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Removed the hardcoded '/dashboard' redirection logic. 
-        # It breaks the tool's flexibility across different web applications.
         
         dynamic_cookies = {}
         if raw_cookie_header:
@@ -111,7 +110,6 @@ class DownloadReportView(APIView):
         if scan.status != 'Completed' or not scan.full_report_json:
             return Response({"error": "Report not ready"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 3. Fixed file path using tempfile to ensure cross-platform compatibility (Windows/Linux)
         temp_dir = tempfile.gettempdir()
         output_pdf_path = os.path.join(temp_dir, f"NexusFlow_Report_{scan_id}.pdf")
         
