@@ -5,6 +5,7 @@ import httpx
 import ipaddress
 from urllib.parse import urlparse
 from engine.models.http_context import HttpResponse
+from engine.core.scan_context import ScanContext
 
 class AsyncSafeHttpClient:
     """
@@ -17,6 +18,7 @@ class AsyncSafeHttpClient:
         self.timeout = timeout
         self.semaphore = asyncio.Semaphore(max_concurrent)
         self.delay = delay
+        self.context = context or ScanContext(target_url="")
         self.allow_local = allow_local
         
         # Initialize the underlying httpx client with global configurations
