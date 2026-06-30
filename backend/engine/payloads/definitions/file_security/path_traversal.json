@@ -1,0 +1,29 @@
+{
+  "vulnerability": "Path Traversal (Arbitrary File Read)",
+  "cases": [
+    {
+      "id": "pt-app-source",
+      "payload": "../../app.py",
+      "severity": "Critical",
+      "cvss": "9.8",
+      "match_regex": "(?i)(from flask import|import django|SECRET_KEY|DATABASES|def [a-z_]+\\()",
+      "description": "The endpoint allows raw file downloads and fails to normalize user-supplied paths. The scanner escaped the upload sandbox to read the application source code."
+    },
+    {
+      "id": "pt-config-backup",
+      "payload": "../../config.bak",
+      "severity": "Critical",
+      "cvss": "9.8",
+      "match_regex": "(?i)(secret[_ ]?key|AKIA[A-Z0-9]{16}|db[_ ]?pass)",
+      "description": "The endpoint allows path traversal, enabling the scanner to read sensitive internal configuration backups bypassing the intended sandbox."
+    },
+    {
+      "id": "pt-unix-passwd",
+      "payload": "../../../../../../etc/passwd",
+      "severity": "High",
+      "cvss": "7.5",
+      "match_regex": "root:x:0:0",
+      "description": "Path traversal sequence successfully escaped the web root to read the local OS user configuration registry (/etc/passwd)."
+    }
+  ]
+}
