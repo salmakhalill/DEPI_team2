@@ -2,16 +2,28 @@
   "vulnerability": "SQL Injection",
   "cases": [
     {
-      "id": "sqli-error-sqlite",
+      "id": "sqli-single-quote-generic",
       "payload": "'",
-      "match_regex": "(?i)(sqlite3\\.OperationalError|syntax error|unrecognized token)",
-      "description": "Triggers verbose SQLite syntax errors or missing tokens messages."
+      "true_suffix": " OR 1=1--",
+      "false_suffix": " AND 1=2--",
+      "match_regex": "(?i)(sqlite3\\.OperationalError|syntax error|unrecognized token|mysql_fetch|pg_query|ORA-[0-9]{4})",
+      "description": "Standard single-quote injection testing for behavioral boolean variance and common database syntax errors."
     },
     {
-      "id": "sqli-boolean-true",
-      "payload": "' OR '1'='1",
-      "match_regex": "(?i)(Marcus|Dashboard|Welcome|Admin)",
-      "description": "Tests for SQL logical bypass verification."
+      "id": "sqli-double-quote-generic",
+      "payload": "\"",
+      "true_suffix": " OR 1=1--",
+      "false_suffix": " AND 1=2--",
+      "match_regex": "(?i)(sqlite3\\.OperationalError|syntax error|unrecognized token)",
+      "description": "Double-quote injection testing for behavioral boolean variance in string-based queries."
+    },
+    {
+      "id": "sqli-integer-based",
+      "payload": "",
+      "true_suffix": " OR 1=1",
+      "false_suffix": " AND 1=2",
+      "match_regex": "(?i)(sqlite3\\.OperationalError|syntax error)",
+      "description": "Integer-based injection testing (no quotes) for behavioral boolean variance."
     }
   ]
 }
