@@ -8,7 +8,7 @@ from engine.storage.finding_repository import FindingRepository
 from engine.correlation.chain_engine import CorrelationEngine
 from engine.core.scan_context import ScanContext
 from engine.models.finding import Finding
-from engine.core.http_client import AsyncSafeHttpClient
+from engine.core.http_client import AsyncSafeHttpClientgi
 from engine.crawler.spider import PlaywrightSpider
 from engine.extractor.param_extractor import ParamExtractor
 from engine.registry.scanner_registry import SCANNER_REGISTRY
@@ -76,9 +76,7 @@ class Orchestrator:
         Correlation (Chaining), and Report Generation.
         Returns the final JSON report dictionary.
         """
-        # ==========================================
-        # Phase 1: Recon & Attack Surface Discovery
-        # ==========================================
+# --------------------------------->>> Phase 1: Recon & Attack Surface Discovery <<<--------------------------------------------------------
         self.send_live_log("[*] Phase 1: Discovery & Attack Surface Mapping")
         
         spider = PlaywrightSpider(
@@ -92,9 +90,7 @@ class Orchestrator:
         
         self.send_live_log(f"[+] Attack Surface Extracted: {len(endpoints)} unique endpoints discovered.")
 
-        # ==========================================
-        # Phase 2: Vulnerability Assessment (Scanners)
-        # ==========================================
+# --------------------------------->>> Phase 2: Vulnerability Assessment (Scanners) <<<--------------------------------------------------------
         self.send_live_log("[*] Phase 2: Vulnerability Assessment (Asynchronous Execution)")
         
         async def run_all_scanners():
@@ -118,9 +114,7 @@ class Orchestrator:
         # Execute the asynchronous scanning pipeline
         asyncio.run(run_all_scanners())
 
-        # ==========================================
-        # Phase 3: Attack Path Correlation (The Brain)
-        # ==========================================
+# --------------------------------->>> Phase 3: Attack Path Correlation (The Brain) <<<--------------------------------------------------------
         self.send_live_log("[*] Phase 3: Executing Attack Path Correlation Engine")
         correlation_engine = CorrelationEngine(
             repository=self.repository, 
@@ -129,9 +123,7 @@ class Orchestrator:
         # This will link isolated findings and inject new "Chain" findings into the repository
         correlation_engine.run_correlation()
 
-        # ==========================================
-        # Phase 4: Report Building
-        # ==========================================
+# --------------------------------->>> Phase 4: Report Building <<<--------------------------------------------------------
         self.send_live_log("[*] Phase 4: Generating Final JSON Report")
         
         # Fetch all findings (including the newly generated chains)

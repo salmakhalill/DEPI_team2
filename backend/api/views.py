@@ -43,11 +43,8 @@ def run_scan_in_background(scan_id, target_url, dynamic_cookies):
         orchestrator = Orchestrator(scan_id=scan_id, context=scan_context, client=client)
 
         orchestrator.load_scanners()
-
-        # 3. Execute Assessment (Returns raw List[Finding])
-        raw_findings = orchestrator.run_assessment()
         
-        # 4. Build Structured JSON Report
+        # 3. Build Structured JSON Report
         final_report_json = orchestrator.run_assessment()
         
         scan.status = 'Completed'

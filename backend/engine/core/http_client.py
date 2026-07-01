@@ -14,7 +14,7 @@ class AsyncSafeHttpClient:
     SSRF protection to prevent internal network scanning by default.
     """
 
-    def __init__(self, max_concurrent: int = 15, timeout: int = 10, delay: float = 0.0, context: ScanContext = None, allow_local: bool = False):
+    def __init__(self, max_concurrent: int = 15, timeout: int = 10, delay: float = 0.0, context: ScanContext = None, allow_local: bool = True):
         self.timeout = timeout
         self.semaphore = asyncio.Semaphore(max_concurrent)
         self.delay = delay
