@@ -1,0 +1,22 @@
+[
+  {
+    "description": "Increment integer ID by 1 to access strictly adjacent objects",
+    "payload": 1,
+    "match_regex": "(?i)(api_key[\"\\s=:]+|secret_key[\"\\s=:]+|is_private[\"\\s=:]+true|confidential|role[\"\\s=:]+admin|password_hash)"
+  },
+  {
+    "description": "Decrement integer ID by 1 to access previous consecutive objects",
+    "payload": -1,
+    "match_regex": "(?i)(api_key[\"\\s=:]+|secret_key[\"\\s=:]+|is_private[\"\\s=:]+true|confidential|role[\"\\s=:]+admin|password_hash)"
+  },
+  {
+    "description": "Increment integer ID by 5 to test non-sequential horizontal privilege escalation",
+    "payload": 5,
+    "match_regex": "(?i)(api_key[\"\\s=:]+|secret_key[\"\\s=:]+|is_private[\"\\s=:]+true|confidential|role[\"\\s=:]+admin|password_hash)"
+  },
+  {
+    "description": "Decrement integer ID by 3 to verify lower-bound boundary enforcement",
+    "payload": -3,
+    "match_regex": "(?i)(api_key[\"\\s=:]+|secret_key[\"\\s=:]+|is_private[\"\\s=:]+true|confidential|role[\"\\s=:]+admin|password_hash)"
+  }
+]
