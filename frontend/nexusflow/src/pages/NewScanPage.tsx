@@ -31,7 +31,7 @@ export default function NewScanPage() {
     setError(null);
 
     try {
-      const res = await startScan({ target_url: targetUrl.trim(), raw_cookie_header: cookieHeader.trim() });
+      const res = await startScan({ target_url: targetUrl.trim(), raw_cookie_header: `session=${cookieHeader.trim()}`});
       navigate(`/scan/${res.data.scan_id}/live`);
     } catch (err: any) {
       const status = err?.response?.status;
