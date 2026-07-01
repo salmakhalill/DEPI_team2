@@ -2,29 +2,42 @@ from dataclasses import dataclass, field
 from typing import Dict
 
 @dataclass
-class HttpResponse:
-    success: bool
-    status_code: int = 0
-    text: str = ""
-    headers: Dict[str, str] = field(default_factory=dict)
-    # populated if success is False (e.g., Timeout, Connection Error)
-    error_message: str = ""
-
-@dataclass
-class RequestContext:
-    method: str
+class HttpRequest:
+    """Represents the outbound HTTP request."""
     url: str
+    method: str
     headers: Dict[str, str] = field(default_factory=dict)
     body: str = ""
 
 @dataclass
-class ResponseContext:
-    status_code: int
-    snippet: str
+class HttpResponse:
+    """Represents the inbound HTTP response."""
+    success: bool
+    status_code: int = 0
+    text: str = ""
+    headers: Dict[str, str] = field(default_factory=dict)
+    error_message: str = ""
+    elapsed_time: float = 0.0
+
+    @property
+    def size(self):
+        """Returns the length of the response text automatically."""
+        return len(self.text)
+
+@dataclass
+class HttpTransaction:
+    """
+    Binds a specific HttpRequest to its resulting HttpResponse.
+    Crucial for Proof of Concept generation and delayed vulnerability verification.
+    """
+    request: HttpRequest
+    response: HttpResponse
 
 @dataclass
 class ProofContext:
-    # flexible fields, scanners populate only what applies to the finding
+    """
+    Maintains context for building the final vulnerability report finding.
+    """
     parameter: str = ""
     payload: str = ""
     file_path: str = ""
