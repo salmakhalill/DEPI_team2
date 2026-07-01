@@ -1,66 +1,70 @@
-import re
+import re, random
+from urllib.parse import urlparse
 from typing import List
 from engine.core.base_scanner import BaseScanner
 from engine.models.endpoint import Endpoint
 from engine.models.finding import Finding, ProofOfConcept, Evidence
 from engine.payloads.payload_manager import PayloadManager
+from engine.analyzer.response_analyzer import ResponseAnalyzer 
 
 class SensitiveFileDisclosureScanner(BaseScanner):
-    
-    def run_scan(self, endpoints: List[Endpoint]) -> List[Finding]:
+    async def run_scan(self, endpoints: List[Endpoint]) -> List[Finding]:
         findings = []
-        sfd_cases = PayloadManager.get_payloads("sfd")
+        payload_data = PayloadManager.get_payloads("sensitive_file")
+        sfd_cases = payload_data.get("cases", []) if isinstance(payload_data, dict) else payload_data
         
-        print(f"  [SFD Scanner] Assessing sensitive file exposure across {len(endpoints)} targets...")
+        if not sfd_cases: return findings
+
+        scanned_roots = set()
+
         if self.log_callback:
-            self.log_callback(f" [SFD Scanner] Assessing sensitive file exposure across {len(endpoints)} targets...")
+            self.log_callback("[*] [SFD Scanner] Hunting for exposed files using dynamic signatures.")
 
         for ep in endpoints:
+            parsed_url = urlparse(ep.url)
+            base_root = f"{parsed_url.scheme}://{parsed_url.netloc}"
+            
+            if base_root in scanned_roots: continue
+            scanned_roots.add(base_root)
+            
+            baseline_resp = await self.client.request('GET', f"{base_root}/nexus_not_found_{random.randint(100,999)}", follow_redirects=False)
+            baseline_text = baseline_resp.text if baseline_resp.success else ""
+
             for case in sfd_cases:
-                payload_path = case["payload"]
-                target_url = f"{ep.url.rstrip('/')}{payload_path}"
+                payload_path = case.get("payload", "")
+                if not payload_path.startswith('/'): payload_path = '/' + payload_path
+                target_url = f"{base_root}{payload_path}"
                 
-                try:
-                    response = self.client.get(target_url)
-                    
-                    if response.success and response.status_code == 200 and len(response.text) > 0:
-                        print(f"  [!] Exposed File Confirmed! Target: {target_url}")
-                        
-                        if self.log_callback:
-                            self.log_callback(f" [VULN] Sensitive File Exposed! Target: {target_url}")
-                        
-                        finding = Finding(
-                            title="Sensitive File Disclosure / Information Exposure",
+                response = await self.client.request('GET', target_url, follow_redirects=False)
+                
+                if response.success and response.status_code == 200 and len(response.text) > 0:
+                    is_vulnerable = False
+                    matched_secret = None
+
+                    compiled_signatures = case.get("compiled_signatures", [])
+                    for compiled_regex in compiled_signatures:
+                        match = ResponseAnalyzer.has_new_signature(baseline_text, response.text, compiled_regex)
+                        if match:
+                            is_vulnerable = True
+                            matched_secret = match.group(0)
+                            break
+
+                    if is_vulnerable:
+                        findings.append(Finding(
+                            title="Sensitive File Disclosure",
                             owasp_category="A05:2021 - Security Misconfiguration",
-                            threat_level="High",
-                            cvss_score="7.5 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N)",
+                            threat_level=case.get("severity", "High"), cvss_score=case.get("cvss", "7.5"),
                             affected_path=f"GET {target_url}",
-                            description=f"The application web root or structural directories expose sensitive configurations or backup files. Accessing the path '{payload_path}' returned an active production footprint with raw file contents.",
-                            business_impact="An unauthenticated remote attacker can download configuration files, environmental variables (.env), database backups, or source logic, leading to complete credential extraction and structural exposure.",
-                            recommendations=[
-                                "Restrict public access to administrative or backup extensions inside server infrastructure rules (e.g., Nginx/Apache configuration).",
-                                "Remove production environment configuration snapshots, deployment files (.git), and local backups from public web directories."
-                            ],
+                            description=f"The application exposes a sensitive file at '{payload_path}'.",
+                            business_impact="Unauthenticated attackers can download infrastructure files.",
+                            recommendations=["Remove local backups from public web directories."],
                             references=["https://owasp.org/www-project-top-ten/2021/A05_2021-Security_Misconfiguration"],
                             proof_of_concept=ProofOfConcept(
-                                intro_text=f"Directly pointing the browser context to the exposed asset tracking path '{payload_path}' permitted unauthorized reading of sensitive internal configuration arrays.",
-                                steps_to_reproduce=[
-                                    f"1. Target the application host environment layout node: {ep.url}",
-                                    f"2. Force directory navigation traversal to the target file context: {target_url}",
-                                    "3. Inspect the returned context to verify structural environment leakage."
-                                ],
-                                evidence=Evidence(
-                                    type="http_snippet",
-                                    request=f"GET {target_url} HTTP/1.1\nHost: target",
-                                    response=f"HTTP/1.1 200 OK\nContent-Length: {len(response.text)}\n\n{response.text[:200]}... [Truncated]"
-                                )
+                                intro_text=f"Direct GET request to '{payload_path}' permitted unauthorized reading.",
+                                steps_to_reproduce=[f"1. Target domain: {base_root}", f"2. Issue GET to: {target_url}"],
+                                evidence=Evidence(type="http_snippet", request=f"GET {target_url} HTTP/1.1", response=f"HTTP/1.1 200 OK\n\n[!] Signature Matched: {matched_secret}")
                             )
-                        )
-                        findings.append(finding)
-                        
-                except Exception as e:
-                    if self.log_callback:
-                        self.log_callback(f" [SFD Scanner Error] Failed to scan {target_url}: {str(e)}")
-                    continue
-                    
+                        ))
+                        if self.log_callback: self.log_callback(f"[!] SFD Confirmed. Target: {target_url}")
+                        break
         return findings
