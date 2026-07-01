@@ -1,0 +1,43 @@
+{
+  "chains": [
+    {
+      "id": "chain-rce-file",
+      "name": "Critical Chain: Remote Code Execution (RCE)",
+      "severity": "Critical",
+      "cvss": "10.0",
+      "requires": ["Unrestricted File Upload", "Local File Inclusion"],
+      "description": "The correlation engine identified a direct attack path to full server compromise. By combining Unrestricted File Upload with Local File Inclusion (LFI), an attacker can execute arbitrary system commands.",
+      "impact": "Total system takeover. Attackers can read, modify, or destroy any data, and pivot to internal networks.",
+      "recommendations": [
+        "Break the chain by fixing the File Upload validation (use strict MIME and magic byte checks).",
+        "Fix the LFI by avoiding dynamic local file inclusion based on user input."
+      ]
+    },
+    {
+      "id": "chain-session-hijacking",
+      "name": "High Risk Chain: Zero-Click Account Takeover",
+      "severity": "Critical",
+      "cvss": "9.0",
+      "requires": ["Stored Cross-Site Scripting (XSS)", "Weak Session Cookie Configuration"],
+      "description": "The engine identified a severe session hijacking chain. The application suffers from Stored XSS, and the session cookies lack the 'HttpOnly' flag.",
+      "impact": "An attacker can permanently steal administrative or user session tokens automatically when victims view the infected page.",
+      "recommendations": [
+        "Implement the HttpOnly flag on all session cookies immediately.",
+        "Sanitize stored inputs to neutralize the XSS vector."
+      ]
+    },
+    {
+      "id": "chain-auth-compromise",
+      "name": "High Risk Chain: Authentication Compromise",
+      "severity": "High",
+      "cvss": "8.5",
+      "requires": ["Weak Password Policy", "Missing Rate Limiting (Brute-Force)"],
+      "description": "The application allows weak passwords and lacks brute-force protection, creating a highly exploitable authentication mechanism.",
+      "impact": "Attackers can easily brute-force user accounts or use credential stuffing to gain unauthorized access.",
+      "recommendations": [
+        "Enforce strict password complexity.",
+        "Implement robust rate limiting and account lockout mechanisms."
+      ]
+    }
+  ]
+}
