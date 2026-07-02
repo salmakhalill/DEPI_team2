@@ -10,7 +10,7 @@ class ReportBuilder:
     """
     
     @classmethod
-    def build_json_report(cls, scan_id: str, target_url: str, findings: List[Finding]) -> Dict[str, Any]:
+    def build_json_report(cls, scan_id: str, target_url: str, findings: List[Finding], start_time: datetime = None) -> Dict[str, Any]:
         # Calculate Threat Distribution
         critical = sum(1 for f in findings if f.threat_level.lower() == "critical")
         high = sum(1 for f in findings if f.threat_level.lower() == "high")
@@ -26,7 +26,13 @@ class ReportBuilder:
         elif low > 0: overall = "Low"
         else: overall = "Secure"
 
-        current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+        current_time_dt = datetime.utcnow()
+        current_time = current_time_dt.strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        if start_time:
+            duration_seconds = round((current_time_dt - start_time).total_seconds(), 2)
+        else:
+            duration_seconds = "N/A"
 
         # Build the Summary Table required by HTML template
         summary_table = []
@@ -53,9 +59,9 @@ class ReportBuilder:
                 "targets": [{"url": target_url}],
                 "out_of_scope": ["Third-party integrations", "External CDNs"],
                 "test_accounts": [],
-                "timeline": {
-                    "start_date": current_time,
-                    "duration_seconds": "Automated" 
+               "timeline": {
+                    "start_date": start_time.strftime("%Y-%m-%d %H:%M:%S UTC") if start_time else current_time,
+                    "duration_seconds": duration_seconds
                 }
             },
             "executive_summary": {

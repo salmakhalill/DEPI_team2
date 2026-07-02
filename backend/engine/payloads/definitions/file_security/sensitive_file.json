@@ -1,0 +1,45 @@
+{
+  "vulnerability": "Sensitive File Disclosure",
+  "cases": [
+    {
+      "id": "sfd-config-backup",
+      "payload": "/backup/config",
+      "severity": "Critical",
+      "cvss": "9.8",
+      "signatures": [
+        "(?i)(secret[_ ]?key|password|AKIA[A-Z0-9]{16}|sk_live_[a-zA-Z0-9]+|SG\\.[a-zA-Z0-9_-]+)"
+      ],
+      "description": "Checks for exposed application configuration backups containing credentials."
+    },
+    {
+      "id": "sfd-env-leakage",
+      "payload": "/.env",
+      "severity": "Critical",
+      "cvss": "9.8",
+      "signatures": [
+        "(?i)(APP_KEY|DB_PASSWORD|SECRET_KEY|AWS_ACCESS_KEY_ID)"
+      ],
+      "description": "Checks for environment variables config exposure."
+    },
+    {
+      "id": "sfd-git-exposure",
+      "payload": "/.git/config",
+      "severity": "High",
+      "cvss": "7.5",
+      "signatures": [
+        "(?i)(\\[remote|\\[core|repositoryformatversion)"
+      ],
+      "description": "Checks for internal source version layout exposure."
+    },
+    {
+      "id": "sfd-sqlite-exposure",
+      "payload": "/db.sqlite",
+      "severity": "Critical",
+      "cvss": "9.8",
+      "signatures": [
+        "(?i)(SQLite format 3|CREATE TABLE)"
+      ],
+      "description": "Checks for production database file disclosure."
+    }
+  ]
+}
