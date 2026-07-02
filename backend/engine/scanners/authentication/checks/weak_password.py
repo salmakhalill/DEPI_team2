@@ -21,7 +21,7 @@ async def check_weak_password(client, ep: Endpoint, cases: list, log_callback) -
                 title="Weak Password Policy",
                 owasp_category="A07:2021 - Identification and Authentication Failures",
                 threat_level=case.get("severity", "Medium"), cvss_score=case.get("cvss", "5.3"),
-                affected_path=f"POST {ep.url}",
+                affected_path=ep.url,
                 description=(
                     case.get("description") or
                     f"The registration endpoint '{ep.url}' accepted the password '{payload}' without "

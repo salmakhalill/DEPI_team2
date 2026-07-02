@@ -119,7 +119,7 @@ class XSSScanner(BaseScanner):
             title=title,
             owasp_category="A03:2021 - Injection",
             threat_level="High", cvss_score=cvss,
-            affected_path=f"{ep_url} [parameter={param}]",
+            affected_path=ep_url,
             description=desc,
             business_impact=impact,
             recommendations=["Encode all user-supplied data before rendering it.", "Implement CSP header."],
