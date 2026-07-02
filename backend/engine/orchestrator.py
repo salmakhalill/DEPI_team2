@@ -133,7 +133,8 @@ class Orchestrator:
         report_json = ReportBuilder.build_json_report(
             scan_id=self.scan_id,
             target_url=self.context.target_url,
-            findings=all_findings
+            findings=all_findings,
+            start_time=self.start_time
         )
 
         self.send_live_log("[+] Assessment pipeline concluded successfully.")
