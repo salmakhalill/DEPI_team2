@@ -8,38 +8,62 @@ from engine.payloads.payload_manager import PayloadManager
 class IDORScanner(BaseScanner):
     """
     Advanced asynchronous scanner for BOLA/IDOR.
-    Implements Baseline Variance Analysis and Messaging Heuristics to eliminate False Positives.
+    Implements Baseline Variance Analysis, Message Heuristics, and Findings Aggregation.
     """
     
     async def run_scan(self, endpoints: List[Endpoint]) -> List[Finding]:
-        findings: List[Finding] = []
+        raw_findings: List[Finding] = []
         
-        # Load payloads (handling both List and Dict formats based on the new JSON structure)
+        # Load payloads 
         raw_cases = PayloadManager.get_payloads("idor")
         idor_cases = raw_cases.get("cases", raw_cases) if isinstance(raw_cases, dict) else raw_cases
         
         if not idor_cases:
             print("  [-] [IDOR Scanner] Payload configuration missing. Aborting.")
-            return findings
+            return []
 
         print(f"  [IDOR/BOLA Scanner] Executing Variance Analysis across {len(endpoints)} targets...")
         if self.log_callback:
             self.log_callback(f"🛡️ [IDOR Scanner] Executing Variance Analysis across {len(endpoints)} targets...")
 
+        # 1. Collect all individual vulnerabilities
         for ep in endpoints:
-            # 1. Test RESTful Path Traversal
             path_finding = await self._test_restful_paths(ep, idor_cases)
             if path_finding:
-                findings.append(path_finding)
+                raw_findings.append(path_finding)
                 continue  
 
-            # 2. Test Parameter Traversal (Using updated Object Architecture)
             if ep.params:
                 param_finding = await self._test_parameters(ep, idor_cases)
                 if param_finding:
-                    findings.append(param_finding)
+                    raw_findings.append(param_finding)
         
-        return findings
+        # ---------------------------------------------------------------------
+        # [NEW]: Vulnerability Aggregation (Merge Findings)
+        # ---------------------------------------------------------------------
+        if not raw_findings:
+            return [] # No vulnerabilities found
+            
+        # Extract unique affected paths from all findings to avoid duplicates
+        unique_paths = list(set([f.affected_path for f in raw_findings]))
+        
+        # Join them with a newline and bullet points or just commas (newline is best for tables)
+        merged_paths_string = "\n".join(unique_paths)
+        
+        # Use the first finding as the base template for the final report
+        merged_finding = raw_findings[0]
+        
+        # Inject the merged paths into the affected_path field
+        merged_finding.affected_path = merged_paths_string
+        
+        # Update the description to highlight that it's a widespread issue
+        merged_finding.description = f"Multiple BOLA/IDOR vulnerabilities detected across {len(unique_paths)} endpoints. " + merged_finding.description
+        
+        # Clarify in the PoC that this is just one example of the many found
+        merged_finding.proof_of_concept.intro_text += f" (Note: This is a representative example. The vulnerability exists across {len(unique_paths)} distinct endpoints)."
+        
+        # Return as a single finding so it generates only ONE table in the report
+        return [merged_finding]
 
     # -------------------------------------------------------------------------
     # Core Logic Handlers
@@ -52,7 +76,6 @@ class IDORScanner(BaseScanner):
             
         original_id = int(path_id_match.group(2))
         
-        # [NEW]: Fetch Baseline to establish normal behavior
         baseline_response = await self._safe_request(ep.method, ep.url)
         baseline_text = getattr(baseline_response, 'text', '') if baseline_response and baseline_response.success else ''
 
@@ -62,12 +85,9 @@ class IDORScanner(BaseScanner):
                 continue
                 
             test_url = re.sub(rf'/({original_id})(/|$|\?)', f'/{test_id}\\2', ep.url)
-            
-            # [NEW]: Use centralized client.request
             response = await self._safe_request(ep.method, test_url)
 
             if response and response.success and getattr(response, 'text', None):
-                # [NEW]: Apply Variance Analysis & Heuristics
                 is_vuln, match_preview = self._analyze_variance(ep.url, baseline_text, response.text, case["match_regex"])
                 
                 if is_vuln:
@@ -76,14 +96,12 @@ class IDORScanner(BaseScanner):
         return None
 
     async def _test_parameters(self, ep: Endpoint, cases: List[Dict]) -> Optional[Finding]:
-        # [NEW]: Handle ep.params as Objects (p.name) instead of Strings
         for p in ep.params:
             param_name = p.name if hasattr(p, 'name') else str(p)
             
             if not self._is_target_parameter(param_name):
                 continue
                 
-            # [NEW]: Fetch Baseline for parameters
             baseline_params = {param.name if hasattr(param, 'name') else str(param): "1" for param in ep.params}
             baseline_response = await self._safe_request(ep.method, ep.url, params_or_data=baseline_params)
             baseline_text = getattr(baseline_response, 'text', '') if baseline_response and baseline_response.success else ''
@@ -92,11 +110,9 @@ class IDORScanner(BaseScanner):
                 test_params = baseline_params.copy()
                 test_params[param_name] = str(1 + case["payload"])
 
-                # [NEW]: Use centralized client.request
                 response = await self._safe_request(ep.method, ep.url, params_or_data=test_params)
 
                 if response and response.success and getattr(response, 'text', None):
-                    # [NEW]: Apply Variance Analysis & Heuristics
                     is_vuln, match_preview = self._analyze_variance(ep.url, baseline_text, response.text, case["match_regex"])
                     
                     if is_vuln:
@@ -110,26 +126,17 @@ class IDORScanner(BaseScanner):
     # -------------------------------------------------------------------------
 
     def _analyze_variance(self, url: str, baseline_text: str, exploit_text: str, regex_pattern: str) -> tuple:
-        """
-        Analyzes the response against the baseline to eliminate False Positives.
-        Implements Message Heuristics for endpoints without sensitive regex keywords.
-        Returns: (is_vulnerable: bool, evidence_preview: str)
-        """
-        # 1. Structural Check: If the exploit returns the exact same data as baseline, it's not IDOR.
         if baseline_text == exploit_text:
             return False, ""
 
-        # 2. Regex Check WITH Variance: Target data is found AND it's different from the baseline
         match = re.search(regex_pattern, exploit_text)
         if match:
             return True, match.group(0)
 
-        # 3. Messaging / Chat Heuristics: No regex match, but it's a message endpoint and content changed
         url_lower = url.lower()
         if any(keyword in url_lower for keyword in ["message", "chat", "inbox"]):
-            # Calculate length variance to ensure it's a substantially different message, not just a CSRF token change
             length_diff = abs(len(exploit_text) - len(baseline_text))
-            if length_diff > 5:  # Margin for small dynamic changes
+            if length_diff > 5:
                 return True, "[Heuristic Match] Unauthorized message content reflected."
 
         return False, ""
@@ -139,10 +146,6 @@ class IDORScanner(BaseScanner):
         return any(keyword in param_name.lower() for keyword in keywords)
 
     async def _safe_request(self, method: str, url: str, params_or_data: Dict[str, Any] = None):
-        """
-        [NEW]: Unified Request Handler.
-        Uses self.client.request to respect core architecture (SSRF protections, Scan Budgets).
-        """
         params_or_data = params_or_data or {}
         try:
             method = method.upper()
@@ -155,6 +158,7 @@ class IDORScanner(BaseScanner):
             return None
 
     def _notify_finding(self, original_url: str, test_url: str):
+        # We still print each individual finding to the console so the user sees the scanner working
         print(f"  [!] BOLA/IDOR Confirmed! Target: {original_url} | Exploit URL: {test_url}")
         if self.log_callback:
             self.log_callback(f"🔓 [VULN] BOLA/IDOR Confirmed! Exploit URL: {test_url}")
