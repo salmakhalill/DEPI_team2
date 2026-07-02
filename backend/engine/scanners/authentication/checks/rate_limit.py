@@ -52,13 +52,28 @@ async def check_rate_limit(client, ep: Endpoint, config: dict, log_callback) -> 
             owasp_category="A07:2021 - Identification and Authentication Failures",
             threat_level="High", cvss_score="7.5",
             affected_path=f"POST {ep.url}",
-            description=f"Endpoint accepted {attempt_count} consecutive invalid authentication attempts without triggering throttling, CAPTCHA, or lockout mechanisms.",
-            business_impact="Exposes the authentication service to distributed brute-force and automated credential stuffing operations.",
+            description=(
+                f"The authentication endpoint '{ep.url}' accepted {attempt_count} consecutive "
+                f"invalid login attempts without triggering any throttling, CAPTCHA challenge, "
+                f"or temporary account lockout. The server returned a consistent HTTP {baseline_status} "
+                f"response across all attempts with no observable slowdown or blocking mechanism."
+            ),
+            business_impact=(
+                "Attackers can run automated brute-force or credential-stuffing tools against "
+                "NexusFlow user accounts at unlimited speed. Combined with weak or reused passwords, "
+                "this significantly raises the likelihood of unauthorized account access, "
+                "potentially exposing sensitive user data or enabling further attacks from "
+                "compromised accounts."
+            ),
             recommendations=["Implement server-side rate limiting constraints.", "Enforce progressive delays or CAPTCHA layers upon consecutive authentication failures."],
             references=["https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks"],
             proof_of_concept=ProofOfConcept(
-                intro_text=f"The scanner generated a burst of {attempt_count} invalid authorization challenges. All requests were processed uniformly.",
-                steps_to_reproduce=[f"1. Target the login routing interface: {ep.url}", f"2. Dispatch {attempt_count} sequential login attempts containing bad credentials.", "3. Verify the absence of response behavior variations or timeouts."],
+                intro_text=f"Sent {attempt_count} consecutive invalid login requests to '{ep.url}' and monitored for throttling behavior.",
+                steps_to_reproduce=[
+                    f"1. Send a POST request with invalid credentials to '{ep.url}'.",
+                    f"2. Repeat the request {attempt_count} times in immediate succession.",
+                    "3. Confirm that no HTTP 429, CAPTCHA prompt, or account lockout is triggered at any point."
+                ],
                 evidence=Evidence(type="http_snippet", request=f"POST {ep.url} HTTP/1.1\n[Burst Sequence Payload x{attempt_count}]", response=f"Final Status Code: HTTP {baseline_status}\n(Uniform application authentication failure state maintained)")
             )
         )

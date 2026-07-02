@@ -87,8 +87,33 @@ class XSSScanner(BaseScanner):
         safe_payload = html.escape(payload)
         
         cvss = "8.1" if xss_type == "Stored" else "7.2"
-        desc = f"The application reflects user input from '{param}' without proper HTML context encoding."
-        impact = "An attacker can execute arbitrary JavaScript in the victim's browser."
+
+        if xss_type == "Stored":
+            desc = (
+                f"The parameter '{param}' at endpoint '{ep_url}' persists user-submitted input "
+                f"to the backend datastore without sanitization. The payload '{safe_payload}' "
+                f"was stored and subsequently rendered verbatim to other users viewing the page, "
+                f"confirming the script executes automatically on every page load — not just for the submitter."
+            )
+            impact = (
+                "A threat actor can permanently inject malicious script into a page accessed by all "
+                "NexusFlow users. Every visitor who views the affected content — without clicking any "
+                "link — has their session exposed, enabling mass session hijacking, credential theft, "
+                "or unauthorized actions performed silently on their behalf."
+            )
+        else:
+            desc = (
+                f"The parameter '{param}' at endpoint '{ep_url}' reflects user-supplied input directly "
+                f"into the HTML response without output encoding. The payload '{safe_payload}' was "
+                f"returned verbatim in the response body, confirming the script executes immediately "
+                f"upon request."
+            )
+            impact = (
+                "A threat actor can craft a malicious URL targeting NexusFlow users. Upon visiting the "
+                "link, the victim's session cookie or authentication token can be silently exfiltrated "
+                "to an attacker-controlled server, enabling account takeover without needing the victim's "
+                "credentials."
+            )
         
         return Finding(
             title=title,
@@ -100,8 +125,12 @@ class XSSScanner(BaseScanner):
             recommendations=["Encode all user-supplied data before rendering it.", "Implement CSP header."],
             references=["https://owasp.org/www-community/attacks/xss/"],
             proof_of_concept=ProofOfConcept(
-                intro_text=f"Sent structural payload '{safe_payload}' via parameter '{param}'.",
-                steps_to_reproduce=[f"1. Target: {ep_url}", f"2. Inject payload into '{param}'"],
+                intro_text=f"Injected the payload '{safe_payload}' via parameter '{param}' and confirmed unescaped rendering in the server response.",
+                steps_to_reproduce=[
+                    f"1. Navigate to '{ep_url}'.",
+                    f"2. Submit '{safe_payload}' as the value of parameter '{param}'.",
+                    "3. Observe that the payload executes without being encoded or stripped by the application."
+                ],
                 evidence=Evidence(type="http_snippet", request=html.escape(request_line), response="Context: Raw Unescaped Reflection Confirmed")
             )
         )
