@@ -8,12 +8,12 @@ interface LogTerminalProps {
 
 const typeStyle: Record<LogEntry['type'], { color: string; prefix: string }> = {
   spider:    { color: '#22d3ee',  prefix: '→' },
-  extractor: { color: '#a855f7', prefix: '⟡' },
+  extractor: { color: '#8e27f0', prefix: '⟡' },
   scanner:   { color: '#f59e0b', prefix: '⚡' },
-  finding:   { color: '#ef4444', prefix: '☠' },
+  finding:   { color: '#e62424', prefix: '☠' },
   reporter:  { color: '#10b981', prefix: '◈' },
   done:      { color: '#10b981', prefix: '✓' },
-  error:     { color: '#ef4444', prefix: '✗' },
+  error:     { color: '#e62424', prefix: '✗' },
   info:      { color: 'rgba(148,163,184,0.6)', prefix: '·' },
 };
 
