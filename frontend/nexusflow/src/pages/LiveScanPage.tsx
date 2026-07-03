@@ -64,8 +64,8 @@ export default function LiveScanPage() {
               fontFamily: '"Space Mono",monospace', marginBottom: 3,
             }}>Scan ID: {scanId}</div>
             <h1 style={{
-              fontFamily: '"Bebas Neue", sans-serif', fontSize: 30, letterSpacing: '0.06em', margin: 0,
-              background: 'linear-gradient(135deg, #f1f5f9, #22d3ee)',
+              fontFamily: '"Michroma", sans-serif', fontSize: 30, letterSpacing: '0.06em', margin: 0,
+              background: 'linear-gradient(135deg, #1badc3, #1badc3)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>Live Scan Dashboard</h1>
           </div>
