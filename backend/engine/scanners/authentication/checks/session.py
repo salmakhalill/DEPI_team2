@@ -23,7 +23,7 @@ async def check_session_flags(client, ep: Endpoint, config: dict, log_callback) 
             title="Weak Session Cookie Configuration",
             owasp_category="A05:2021 - Security Misconfiguration",
             threat_level="High", cvss_score="7.3",
-            affected_path=f"Session Cookie issued via {ep.method} {ep.url}", 
+            affected_path=f"{ep.url}", 
             description=(
                 f"The session cookie issued by '{ep.url}' is missing the following security "
                 f"attribute(s): {', '.join(missing_flags)}. Without these flags, the browser does "
