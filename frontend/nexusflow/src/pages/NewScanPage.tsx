@@ -80,7 +80,7 @@ export default function NewScanPage() {
               fontFamily: '"Michroma", sans-serif',
               fontSize: 35, letterSpacing: '0.06em',
               fontWeight: 600,
-              background: 'linear-gradient(135deg, #22d3ee 00%, #1d6999 100%)',
+              background: 'linear-gradient(135deg, #c9d1d9 00%, #c9d1d9 100%)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               marginBottom: 8,
             }}>Configure Target</h1>
@@ -105,7 +105,7 @@ export default function NewScanPage() {
               fontFamily: '"Space Mono", monospace', lineHeight: 1.7,
               letterSpacing: '0.04em',
             }}>
-              Only scan systems you own or have explicit written permission to test. Unauthorized scanning is illegal.
+              Only scan systems you own or have explicit written permission to test.
             </span>
           </div>
 
@@ -153,7 +153,7 @@ export default function NewScanPage() {
               <label style={{
                 display: 'block',
                 fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase',
-                color: 'rgb(245, 56, 255)',
+                color: 'rgba(149, 45, 144)',
                 fontFamily: '"Michroma", monospace',
                 marginBottom: 8,
               }}>
