@@ -4,16 +4,16 @@
     {
       "id": "lfi-app-source",
       "payload": "../app.py",
-      "severity": "Critical",
-      "cvss": "9.8",
+      "severity": "High",
+      "cvss": "7.5",
       "match_regex": "(?i)(from flask import|import django|SECRET_KEY|DATABASES|def [a-z_]+\\()",
       "description": "The endpoint joins the user-supplied template parameter and reads it inline with no validation, rendering arbitrary server files (app.py) directly into the page."
     },
     {
       "id": "lfi-config-backup",
       "payload": "../config.bak",
-      "severity": "Critical",
-      "cvss": "9.8",
+      "severity": "High",
+      "cvss": "7.5",
       "match_regex": "(?i)(secret[_ ]?key|AKIA[A-Z0-9]{16}|db[_ ]?pass)",
       "description": "Template inclusion logic abused to render sensitive configuration backups directly into the web response."
     }

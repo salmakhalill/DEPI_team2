@@ -19,8 +19,8 @@
       "filename": "shell.php.jpg",
       "content": "<?php echo 'UPLOAD_PWN_DOUBLE_EXT'; ?>",
       "content_type": "image/jpeg",
-      "severity": "High",
-      "cvss": "8.8",
+      "severity": "Critical",
+      "cvss": "9.8",
       "match_regex": "(?i)({filename}|UPLOAD_PWN_DOUBLE_EXT|successfully uploaded|file uploaded)",
       "description": "Double extension bypass — server sees .jpg but stores .php.jpg. Confirms extension-only validation is bypassable."
     }
