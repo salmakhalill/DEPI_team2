@@ -6,8 +6,8 @@
       "severity": "Critical",
       "cvss": "10.0",
       "requires": ["Unrestricted File Upload", "Local File Inclusion"],
-      "description": "The correlation engine identified a direct attack path to full server compromise. By combining Unrestricted File Upload with Local File Inclusion (LFI), an attacker can execute arbitrary system commands.",
-      "impact": "Total system takeover. Attackers can read, modify, or destroy any data, and pivot to internal networks.",
+      "description": "The correlation engine identified a combination of findings that satisfies a predefined attack-chain rule. The presence of both Unrestricted File Upload and Local File Inclusion (LFI) may allow an attacker to execute uploaded files depending on the application's implementation and deployment environment.",
+      "impact": "If successfully exploited, this combination of vulnerabilities may allow an attacker to execute arbitrary code, access sensitive resources, or further compromise the affected system depending on the server configuration and application privileges.",
       "recommendations": [
         "Break the chain by fixing the File Upload validation (use strict MIME and magic byte checks).",
         "Fix the LFI by avoiding dynamic local file inclusion based on user input."
@@ -19,8 +19,8 @@
       "severity": "Critical",
       "cvss": "9.0",
       "requires": ["Stored Cross-Site Scripting (XSS)", "Weak Session Cookie Configuration"],
-      "description": "The engine identified a severe session hijacking chain. The application suffers from Stored XSS, and the session cookies lack the 'HttpOnly' flag.",
-      "impact": "An attacker can permanently steal administrative or user session tokens automatically when victims view the infected page.",
+      "description": "The correlation engine identified a combination of Stored Cross-Site Scripting (XSS) and insecure session cookie configuration. Together, these findings represent a potential session hijacking scenario.",
+      "impact": "If successfully exploited, an attacker may be able to capture active session tokens and impersonate authenticated users depending on browser behavior and application configuration.",
       "recommendations": [
         "Implement the HttpOnly flag on all session cookies immediately.",
         "Sanitize stored inputs to neutralize the XSS vector."
@@ -32,8 +32,8 @@
       "severity": "High",
       "cvss": "8.5",
       "requires": ["Weak Password Policy", "Missing Rate Limiting (Brute-Force)"],
-      "description": "The application allows weak passwords and lacks brute-force protection, creating a highly exploitable authentication mechanism.",
-      "impact": "Attackers can easily brute-force user accounts or use credential stuffing to gain unauthorized access.",
+      "description": "The correlation engine identified weak password requirements together with the absence of brute-force protection. This combination increases the likelihood of successful password guessing attacks.",
+      "impact": "If successfully exploited, attackers may obtain unauthorized access through password guessing or credential stuffing attacks.",
       "recommendations": [
         "Enforce strict password complexity.",
         "Implement robust rate limiting and account lockout mechanisms."
