@@ -233,15 +233,7 @@ export default function LiveScanPage() {
               </p>
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <button onClick={() => navigate(`/scan/${scanId}/report`)} style={{
-                padding: '12px 24px', borderRadius: 10,
-                fontFamily: '"Bebas Neue",sans-serif', fontSize: 16, letterSpacing: '0.1em',
-                background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.5)',
-                color: '#10b981', cursor: 'pointer', transition: 'all 0.2s',
-              }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 20px rgba(16,185,129,0.3)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
-              >View Full Report →</button>
+              
               <a href={getReportUrl(scanId!)} target="_blank" rel="noreferrer" style={{
                 padding: '12px 24px', borderRadius: 10,
                 fontFamily: '"Bebas Neue",sans-serif', fontSize: 16, letterSpacing: '0.1em',
