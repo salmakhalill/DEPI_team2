@@ -60,8 +60,8 @@ class LFIScanner(BaseScanner):
                             findings.append(Finding(
                                 title="Local File Inclusion (LFI)",
                                 owasp_category="A01:2021 - Broken Access Control",
-                                threat_level=severity, cvss_score=cvss_score,
-                                affected_path=f"GET {ep.url} [Param: {param}]",
+                                threat_level=case.get("severity", "High"), cvss_score=cvss_score,
+                                affected_path=f"{ep.url} [Param: {param}]",
                                 description=case.get("description", "LFI Vulnerability detected."),
                                 business_impact="Remote attackers can extract critical system files.",
                                 recommendations=["Maintain an explicit allow-list of valid template names."],

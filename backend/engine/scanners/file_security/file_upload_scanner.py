@@ -109,7 +109,7 @@ class FileUploadScanner(BaseScanner):
                                 title="Unrestricted File Upload",
                                 owasp_category="A04:2021 - Insecure Design",
                                 threat_level=case.get("severity", "Critical"), cvss_score=case.get("cvss", "9.8"),
-                                affected_path=f"POST {ep.url} ➔ {matched_evidence}",
+                                affected_path=f" {ep.url} ➔ {matched_evidence}",
                                 description=case.get("description", "Unrestricted File Upload detected."),
                                 business_impact="Unauthenticated remote threat actors can register server-side executable code structures.",
                                 recommendations=["Enforce binary magic byte signatures inspections instead of depending on MIME types or extensions."],

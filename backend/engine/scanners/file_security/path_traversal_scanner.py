@@ -66,8 +66,8 @@ class PathTraversalScanner(BaseScanner):
                             findings.append(Finding(
                                 title="Path Traversal (Arbitrary File Read)",
                                 owasp_category="A01:2021 - Broken Access Control",
-                                threat_level=severity, cvss_score=cvss_score,
-                                affected_path=f"{ep.method} {ep.url} [Param: {param}]",
+                                threat_level=case.get("severity", "High"), cvss_score=cvss_score,
+                                affected_path=f"{ep.url} [Param: {param}]",
                                 description=case.get("description", "Path Traversal detected."),
                                 business_impact="Attackers can read arbitrary files on the server.",
                                 recommendations=["Resolve requested paths and verify containment."],
