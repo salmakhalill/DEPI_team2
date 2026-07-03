@@ -22,12 +22,75 @@ const VULN_KB: Array<{ pattern: string; kb: VulnKB }> = [
   { pattern: 'csrf', kb: { type: 'Cross-Site Request Forgery', description: 'An attacker tricks authenticated users into performing unintended actions.', remediation: 'Use synchronised CSRF tokens. Set SameSite=Strict on session cookies. Verify Origin/Referer headers.' } },
 ];
 
+function extractVulnNameFromMessage(msg: string): string {
+  // Pattern 1 — "[!] <VulnName> Confirmed! ..."
+  // e.g. "[!] SQL Injection Confirmed!" → "SQL Injection"
+  //      "[!] Broken Authentication Confirmed!" → "Broken Authentication"
+  const confirmedMatch = msg.match(/\[!\]\s+(.+?)\s+(?:Confirmed|Found|Detected|Discovered|Vulnerable|Identified)/i);
+  if (confirmedMatch) return confirmedMatch[1].trim();
+
+  // Pattern 2 — "[VULN] <VulnName> | ..."
+  // e.g. "[VULN] Open Redirect | Target: ..."
+  const vulnTagMatch = msg.match(/\[VULN\]\s+(.+?)\s*[|:]/i);
+  if (vulnTagMatch) return vulnTagMatch[1].trim();
+
+  // Pattern 3 — "[ScannerName] <VulnName> Confirmed ..."
+  // e.g. "[XSS Scanner] Reflected XSS Confirmed"
+  const scannerMatch = msg.match(/\[[^\]]+Scanner\]\s+(.+?)\s+(?:Confirmed|Found|Detected)/i);
+  if (scannerMatch) return scannerMatch[1].trim();
+
+  // Pattern 4 — look for known vuln keywords anywhere in the message
+  // and capitalise them properly
+  const keywordMap: Record<string, string> = {
+    'sql injection':         'SQL Injection',
+    'sqli':                  'SQL Injection',
+    'xss':                   'Cross-Site Scripting (XSS)',
+    'cross-site scripting':  'Cross-Site Scripting (XSS)',
+    'rce':                   'Remote Code Execution',
+    'remote code execution': 'Remote Code Execution',
+    'ssrf':                  'Server-Side Request Forgery',
+    'csrf':                  'Cross-Site Request Forgery',
+    'idor':                  'Insecure Direct Object Reference',
+    'open redirect':         'Open Redirect',
+    'lfi':                   'Local File Inclusion',
+    'rfi':                   'Remote File Inclusion',
+    'xxe':                   'XML External Entity (XXE)',
+    'command injection':     'Command Injection',
+    'path traversal':        'Path Traversal',
+    'directory traversal':   'Directory Traversal',
+    'authentication bypass': 'Authentication Bypass',
+    'broken authentication': 'Broken Authentication',
+    'information disclosure':'Information Disclosure',
+    'clickjacking':          'Clickjacking',
+    'insecure deserialization': 'Insecure Deserialization',
+  };
+  const lower = msg.toLowerCase();
+  for (const [keyword, label] of Object.entries(keywordMap)) {
+    if (lower.includes(keyword)) return label;
+  }
+
+  // Pattern 5 — last resort: grab text between [!] or [VULN] and the first |
+  const anyTagMatch = msg.match(/\[(?:!|VULN|FINDING)\]\s+(.+?)(?:\s*\||$)/i);
+  if (anyTagMatch) return anyTagMatch[1].trim();
+
+  return 'Security Vulnerability';
+}
+
 function lookupVuln(msg: string): VulnKB {
   const lower = msg.toLowerCase();
+
+  // Try KB first (has rich description + remediation)
   for (const { pattern, kb } of VULN_KB) {
     if (lower.includes(pattern)) return kb;
   }
-  return { type: 'Security Vulnerability', description: 'A security weakness was identified that may allow an attacker to compromise the application.', remediation: 'Apply input validation, output encoding, and the principle of least privilege to the affected parameter.' };
+
+  // KB miss — extract the name from the message itself
+  const extractedName = extractVulnNameFromMessage(msg);
+  return {
+    type: extractedName,
+    description: `A ${extractedName} vulnerability was identified. This security weakness may allow an attacker to compromise the confidentiality, integrity, or availability of the application.`,
+    remediation: `Review the affected parameter and apply strict input validation, output encoding, and the principle of least privilege. Consult OWASP guidelines for ${extractedName} remediation.`,
+  };
 }
 
 // ─── Phase rules ──────────────────────────────────────────────────────────────
