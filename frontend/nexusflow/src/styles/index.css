@@ -124,27 +124,21 @@ body {
 
 /* Scan button */
 .scan-btn {
-  background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(85, 99, 247, 0.2));
-  background-size: 200% 100%;
-  border: 1px solid rgba(34,211,238,0.5);
-  color: #22d3ee;
-  transition: all 0.3s ease;
-  font-family: "Michroma", sans-serif;
-  letter-spacing: 0.15em;
+  background: rgba(125,211,232,0.07);
+  border: 1px solid rgba(125,211,232,0.28);
+  color: var(--cyan);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  font-family: 'Michroma', sans-serif;
+  letter-spacing: 0.14em;
 }
 
 .scan-btn:hover {
-  background: linear-gradient(135deg, rgba(34,211,238,0.35), rgba(90, 85, 247, 0.35));
-  border-color: #22d3ee;
-  box-shadow: 0 0 20px rgba(34,211,238,0.4), 0 0 40px rgba(34,211,238,0.15);
-  animation: shimmer 1.5s linear infinite;
+  background: rgba(125,211,232,0.12);
+  border-color: rgba(130, 216, 238, 0.5);
+  box-shadow: 0 0 16px rgba(125,211,232,0.12);
 }
 
-.scan-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  animation: none;
-}
+.scan-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Input style */
 .cyber-input {
