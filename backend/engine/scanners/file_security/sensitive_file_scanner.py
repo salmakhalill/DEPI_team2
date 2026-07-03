@@ -54,7 +54,7 @@ class SensitiveFileDisclosureScanner(BaseScanner):
                             title="Sensitive File Disclosure",
                             owasp_category="A05:2021 - Security Misconfiguration",
                             threat_level=case.get("severity", "High"), cvss_score=case.get("cvss", "7.5"),
-                            affected_path=f"GET {target_url}",
+                            affected_path=f"{target_url}",
                             description=f"The application exposes a sensitive file at '{payload_path}'.",
                             business_impact="Unauthenticated attackers can download infrastructure files.",
                             recommendations=["Remove local backups from public web directories."],
