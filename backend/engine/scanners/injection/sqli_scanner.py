@@ -90,13 +90,22 @@ class SQLInjectionScanner(BaseScanner):
                     )
                     
                     if is_boolean_vuln or syntax_error_detected:
-                        confidence = "High (Behavioral Verification)" if is_boolean_vuln else "Medium (Strict Error Match)"
-                        description = f"Automated verification confirmed logic control over the backend storage via parameter '{param}'."
-                        if syntax_error_detected: description += " Explicit backend SQL faults and database errors were triggered."
+                        confidence = "High" if is_boolean_vuln else "Medium"
+                        description = (
+                            f"The application responded differently when SQL injection payloads were "
+                            f"submitted to the '{param}' parameter. Automated analysis identified "
+                            f"behavior consistent with SQL Injection through boolean-based response "
+                            f"variation and/or SQL error pattern detection."
+                        )
+
+                        if syntax_error_detected:
+                            description += (
+                                " SQL error patterns were also detected during automated testing, "
+                                "providing additional supporting evidence."
+                            )
 
                         separator = "&" if "?" in ep.url else "?"
                         request_evidence = f"{ep.method} {ep.url}{separator}{param}={true_payload} HTTP/1.1"
-                        response_evidence = f"Engine Confidence: {confidence}\nSyntax Error Detected: {syntax_error_detected}\nBoolean Variance Detected: {is_boolean_vuln}"
 
                         findings.append(Finding(
                             title="SQL Injection (SQLi)",
@@ -104,13 +113,41 @@ class SQLInjectionScanner(BaseScanner):
                             threat_level="Critical", cvss_score="9.8",
                             affected_path=f"{ep.url} [parameter={param}]",
                             description=description,
-                            business_impact="An unauthenticated remote attacker can completely manipulate application logic parameters and execute arbitrary system functions.",
-                            recommendations=["Transition codebase queries to strictly parameterized ORM architectures globally.", "Disable explicit stack-trace mapping outputs."],
+                            business_impact=(
+                                "Successful exploitation of SQL Injection may allow an attacker to access, "
+                                "modify, or retrieve database information depending on the application's "
+                                "implementation and database privileges."
+                            ),
+                            recommendations=[
+                                "Use parameterized queries or prepared statements.",
+                                "Avoid constructing SQL queries using untrusted user input.",
+                                "Validate and sanitize input before processing.",
+                                "Apply the principle of least privilege to database accounts.",
+                                "Return generic database error messages instead of exposing database errors."
+                            ],
                             references=["https://owasp.org/www-community/attacks/SQL_Injection"],
                             proof_of_concept=ProofOfConcept(
-                                intro_text=f"Injecting relational query operators inside input field '{param}' manipulated the application rendering structure.",
-                                steps_to_reproduce=[f"1. Target Endpoint: {ep.url}", f"2. True Logic Payload: {true_payload}", f"3. False Logic Payload: {false_payload}"],
-                                evidence=Evidence(type="http_snippet", request=request_evidence, response=response_evidence)
+                                intro_text=(
+                                    f"Automated testing submitted SQL injection payloads to the '{param}' "
+                                    "parameter and compared application responses to identify behavior "
+                                    "consistent with SQL Injection."
+                                ),
+                                steps_to_reproduce=[
+                                    f"Target Endpoint: {ep.url}",
+                                    f"Parameter: {param}",
+                                    f"True Payload: {true_payload}",
+                                    f"False Payload: {false_payload}"
+                                ],
+                                evidence=Evidence(
+                                    type="http_snippet",
+                                    request=request_evidence,
+                                    response=(
+                                        "Detection Method:\n"
+                                        f"- Boolean Response Analysis: {'Detected' if is_boolean_vuln else 'Not Detected'}\n"
+                                        f"- SQL Error Pattern Matching: {'Detected' if syntax_error_detected else 'Not Detected'}\n\n"
+                                        f"Confidence: {confidence}"
+                                    )
+                                )
                             )
                         ))
                         
