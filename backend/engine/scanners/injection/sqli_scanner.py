@@ -102,7 +102,7 @@ class SQLInjectionScanner(BaseScanner):
                             title="SQL Injection (SQLi)",
                             owasp_category="A03:2021 - Injection",
                             threat_level="Critical", cvss_score="9.8",
-                            affected_path=f"{ep.method} {ep.url} [parameter={param}]",
+                            affected_path=f"{ep.url} [parameter={param}]",
                             description=description,
                             business_impact="An unauthenticated remote attacker can completely manipulate application logic parameters and execute arbitrary system functions.",
                             recommendations=["Transition codebase queries to strictly parameterized ORM architectures globally.", "Disable explicit stack-trace mapping outputs."],
