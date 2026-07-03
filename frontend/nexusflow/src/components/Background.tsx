@@ -10,8 +10,8 @@ export default function Background({ isScanning = false }: BackgroundProps) {
         style={{
           position: 'absolute', inset: 0,
           background: `
-            radial-gradient(ellipse at 20% 50%, #0c1445 0%, transparent 60%),
-            radial-gradient(ellipse at 80% 20%, #0d0d2b 0%, transparent 50%),
+            radial-gradient(ellipse at 60% 50%, #0c1445 0%, transparent 60%),
+            radial-gradient(ellipse at 90% 20%, #0d0d2b 0%, transparent 80%),
             #020817
           `,
         }}
