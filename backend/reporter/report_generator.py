@@ -46,7 +46,7 @@ def generate_pdf(dynamic_data, output_pdf_path, **kwargs):
             header_template="<div></div>",
             footer_template="""
             <div style="width: 100%; text-align: right; font-size: 10px; font-family: 'Segoe UI', Arial, sans-serif; color: #7f8c8d; padding-right: 20px; padding-bottom: 5px;">
-                Page <span class="pageNumber"></span> of <span class="totalPages"></span>
+                <span class="pageNumber"></span>
             </div>
             """,
             margin={"top": "20px", "bottom": "50px", "left": "20px", "right": "20px"}

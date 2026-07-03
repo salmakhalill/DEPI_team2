@@ -165,7 +165,7 @@ class IDORScanner(BaseScanner):
             owasp_category="API1:2023 - Broken Object Level Authorization",
             threat_level="High",
             cvss_score="8.5 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N)",
-            affected_path=f"{ep.method} {ep.url}",
+            affected_path=f"{ep.url}",
             description=f"The endpoint fails to enforce authorization bounds on the {vector_type}. By manipulating the ID to '{payload}', the system returned unauthorized data. Verified via Baseline Variance Analysis.",
             business_impact="An authenticated attacker can bypass access controls to view or modify sensitive records belonging to other users.",
             recommendations=[

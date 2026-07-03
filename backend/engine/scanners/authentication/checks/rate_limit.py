@@ -51,7 +51,7 @@ async def check_rate_limit(client, ep: Endpoint, config: dict, log_callback) -> 
             title="Missing Rate Limiting (Brute-Force)",
             owasp_category="A07:2021 - Identification and Authentication Failures",
             threat_level="High", cvss_score="7.5",
-            affected_path=f"POST {ep.url}",
+            affected_path=f"{ep.url}",
             description=(
                 f"The authentication endpoint '{ep.url}' accepted {attempt_count} consecutive "
                 f"invalid login attempts without triggering any throttling, CAPTCHA challenge, "

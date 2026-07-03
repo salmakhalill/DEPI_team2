@@ -23,7 +23,7 @@ def generate_bar_chart(findings):
     ax.bar(ids, scores, color=colors, width=0.5)
     ax.set_ylim(0, 10)
     plt.ylabel('CVSS Score')
-
+    plt.xticks(rotation=90, ha='center', fontsize=8)
     colors_map = {'Critical': '#8b0000', 'High': '#dc3545', 'Medium': '#ffc107', 'Low': '#28a745'}
     legend_elements = [mpatches.Patch(color=colors_map[lvl], label=lvl) for lvl in ['Critical', 'High', 'Medium', 'Low'] if lvl in present_levels]
     ax.legend(handles=legend_elements, title="Risk Level", loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False)

@@ -217,7 +217,7 @@
         <tr><th>OWASP Category</th><td>{{ finding.owasp_category }}</td></tr>
         <tr><th>Threat Level</th><td class="risk-{{ finding.threat_level }}">{{ finding.threat_level }}</td></tr>
         <tr><th>CVSS Score</th><td>{{ finding.cvss_score }}</td></tr>
-        <tr><th>Affected Path(s)+Function</th><td style="font-family: monospace; font-size: 13px; line-height: 1.6;">{{ finding.affected_path_html|safe }}</td></tr>      
+        <tr><th>Affected Path(s)</th><td style="font-family: monospace; font-size: 13px; line-height: 1.6;">{{ finding.affected_path_html|safe }}</td></tr>      
         <tr><th>Description</th><td>{{ finding.description }}</td></tr>
         <tr><th>Business Impact</th><td>{{ finding.business_impact }}</td></tr>
         <tr>
@@ -284,6 +284,12 @@
 
     <h3 id="comp-3" class="subsection-title">7.3 Conclusion</h3>
     <p>{{ static.conclusion }}</p>
+
+    <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #d0d0d0; text-align: center;">
+        <p style="font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #2c3e50; margin: 0;">DEPI_MNF_Team2</p>
+        <p style="font-size: 11px; color: #7f8c8d; margin: 4px 0 0 0;">Report generated on {{ dynamic.report_metadata.date_generated }}</p>
+    </div>
+
 
 </body>
 </html>
