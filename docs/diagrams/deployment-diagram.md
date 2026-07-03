@@ -33,9 +33,9 @@ flowchart TB
     end
 
     Browser -->|HTTP UI| Vite
-    Vite -->|POST /api/scan/start| Django
-    Vite -->|GET /api/scan/{id}/report| Django
-    Vite <-->|ws://localhost:8000/ws/scan/{id}/| Django
+    Vite -->|"POST /api/scan/start"| Django
+    Vite -->|"GET /api/scan/{id}/report"| Django
+    Vite <-->|"ws://localhost:8000/ws/scan/{id}/"| Django
 
     Django --> Channels
     Django --> SQLite
@@ -43,15 +43,15 @@ flowchart TB
     ScanThread --> AsyncLoop
     ScanThread --> PlaywrightBackend
     ScanThread --> Httpx
-    PlaywrightBackend -->|crawl target| Flask
-    Httpx -->|scanner requests| Flask
+    PlaywrightBackend -->|"crawl target"| Flask
+    Httpx -->|"scanner requests"| Flask
     Flask --> VulnSQLite
     Flask --> Uploads
     Flask --> Templates
 
-    Django -->|generate PDF on download| PlaywrightBackend
+    Django -->|"generate PDF on download"| PlaywrightBackend
     PlaywrightBackend --> TempPDF
-    Django -->|PDF file response| Vite
+    Django -->|"PDF file response"| Vite
 ```
 
 Interpretation: all services run on the same local machine. The frontend is served by Vite, the backend is a local Django ASGI process, scan work runs inside a background thread in that backend process, and the target is a separate local Flask process.
