@@ -1,8 +1,17 @@
-# NexusFlow DAST Scanner
+# Automated DAST Platform
 
-NexusFlow is a graduation project that implements a local Dynamic Application Security Testing (DAST) scanner. It crawls a target web application, extracts endpoints and parameters, executes modular vulnerability scanners, correlates related findings, and generates a structured security report.
+This repository contains a modular Dynamic Application Security Testing (DAST) platform developed as part of the **Digital Egypt Pioneers Initiative (DEPI)**.
 
-The current implementation is designed for local development, controlled testing, and project demonstration. It is not a production deployment.
+The project was built to explore how **Dynamic Application Security Testing (DAST)** platforms are designed and engineered. Instead of focusing on individual vulnerability scanners, we designed a modular assessment pipeline to understand how the different stages of a security assessment integrate through shared infrastructure into a single platform.
+
+The platform follows an end-to-end assessment workflow:
+
+**Target → Crawl → Discover → Extract → Scan → Analyze → Correlate → Live Dashboard → Assessment Report**
+
+The current implementation represents a **Minimum Viable Product (MVP)** that validates the platform architecture and assessment workflow. It targets **local deployment** and provides a foundation for future enhancements rather than a production-ready deployment.
+
+This repository documents the platform architecture, implementation, and the technologies behind each stage of the assessment workflow.
+
 
 ## Project Overview
 
@@ -140,14 +149,14 @@ For complete setup instructions, see [docs/setup.md](docs/setup.md).
 
 ## Current Limitations
 
-- Not a production deployment.
-- No scanner dashboard authentication or user management.
+The current implementation is an MVP, so some capabilities are intentionally out of scope:
+
+- No authentication or user management for the dashboard.
 - No scan history API.
 - No scan cancellation API.
-- No persistent normalized finding records during scan execution.
-- Django Channels uses an in-memory channel layer.
-- Active scan jobs are not durable if the backend process exits.
-- Some files under `backend/tests/` are legacy/manual scripts and do not fully match the current active engine APIs.
+- Assessment results are not persisted across sessions. Refreshing the application or restarting the backend clears previous scan results.
+- Django Channels currently uses an in-memory channel layer.
+- Active scan jobs are not recoverable if the backend process stops.
 
 ## Future Roadmap
 
